@@ -2,7 +2,6 @@ config.py
 __pycache__/
 *.pyc
 .workbuddy/
-outputs/
 data/*.feather
 data/*.parquet
 *.egg-info/
