@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AI Quant Lab - 股票技术分析工具</title>
+    <title>AI Quant Lab - 股票技术分析工具 v2.0</title>
     
     <!-- Lightweight Charts CDN -->
     <script src="https://unpkg.com/lightweight-charts@4.1.3/dist/lightweight-charts.standalone.production.js"></script>
@@ -260,6 +260,165 @@
             color: #3fb950;
         }
         
+        /* 图表图例 */
+        .chart-legend {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 15px;
+            padding: 10px 20px;
+            background: #21262d;
+            border-top: 1px solid #30363d;
+            font-size: 12px;
+        }
+        
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        
+        .legend-color {
+            width: 20px;
+            height: 3px;
+            border-radius: 2px;
+        }
+        
+        .legend-line {
+            width: 20px;
+            height: 2px;
+            border-radius: 1px;
+        }
+        
+        .legend-label {
+            color: #c9d1d9;
+            font-size: 12px;
+        }
+        
+        .legend-candlestick {
+            width: 12px;
+            height: 12px;
+            background: linear-gradient(135deg, #f85149 50%, #3fb950 50%);
+            border-radius: 2px;
+        }
+        
+        .legend-histogram {
+            width: 12px;
+            height: 12px;
+            background: linear-gradient(135deg, #f85149 50%, #3fb950 50%);
+            border-radius: 2px;
+            opacity: 0.5;
+        }
+        
+        /* 信号面板样式 */
+        #signalsPanel {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 15px;
+        }
+        
+        .signal-item {
+            background: #21262d;
+            padding: 15px;
+            border-radius: 6px;
+            border: 1px solid #30363d;
+            transition: all 0.3s;
+        }
+        
+        .signal-item:hover {
+            border-color: #58a6ff;
+            transform: translateY(-2px);
+        }
+        
+        .signal-buy {
+            border-left: 4px solid #3fb950;
+        }
+        
+        .signal-sell {
+            border-left: 4px solid #f85149;
+        }
+        
+        .signal-neutral {
+            border-left: 4px solid #8b949e;
+        }
+        
+        .signal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+        
+        .signal-indicator {
+            font-size: 14px;
+            font-weight: 600;
+            color: #c9d1d9;
+        }
+        
+        .signal-type {
+            padding: 4px 12px;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+        
+        .signal-type.buy {
+            background: rgba(63, 185, 80, 0.2);
+            color: #3fb950;
+        }
+        
+        .signal-type.sell {
+            background: rgba(248, 81, 73, 0.2);
+            color: #f85149;
+        }
+        
+        .signal-type.neutral {
+            background: rgba(139, 148, 158, 0.2);
+            color: #8b949e;
+        }
+        
+        .signal-reason {
+            font-size: 13px;
+            color: #c9d1d9;
+            margin-bottom: 8px;
+        }
+        
+        .signal-strength {
+            font-size: 11px;
+            color: #8b949e;
+        }
+        
+        .loading {
+            color: #8b949e;
+            font-size: 13px;
+            text-align: center;
+            padding: 20px;
+        }
+        
+        /* 响应式设计 */
+        @media (max-width: 768px) {
+            .container {
+                flex-direction: column;
+            }
+            
+            .sidebar {
+                width: 100%;
+                max-height: 300px;
+            }
+            
+            .stats-grid {
+                grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            }
+            
+            #signalsPanel {
+                grid-template-columns: 1fr;
+            }
+            
+            .chart-legend {
+                gap: 10px;
+                padding: 8px 15px;
+            }
+        }
+        
         /* 加载提示 */
         .loading {
             text-align: center;
@@ -432,6 +591,7 @@
                     <div class="chart-wrapper">
                         <div id="candlestickChart" style="height: 400px;"></div>
                     </div>
+                    <div class="chart-legend" id="mainChartLegend"></div>
                 </div>
                 
                 <!-- RSI图 -->
@@ -442,6 +602,7 @@
                     <div class="chart-wrapper">
                         <div id="rsiChart" style="height: 200px;"></div>
                     </div>
+                    <div class="chart-legend" id="rsiChartLegend"></div>
                 </div>
                 
                 <!-- MACD图 -->
@@ -452,6 +613,7 @@
                     <div class="chart-wrapper">
                         <div id="macdChart" style="height: 200px;"></div>
                     </div>
+                    <div class="chart-legend" id="macdChartLegend"></div>
                 </div>
                 
                 <!-- DMI/ADX图 -->
@@ -462,6 +624,7 @@
                     <div class="chart-wrapper">
                         <div id="dmiChart" style="height: 200px;"></div>
                     </div>
+                    <div class="chart-legend" id="dmiChartLegend"></div>
                 </div>
                 
                 <!-- KDJ图 -->
@@ -472,6 +635,7 @@
                     <div class="chart-wrapper">
                         <div id="kdjChart" style="height: 200px;"></div>
                     </div>
+                    <div class="chart-legend" id="kdjChartLegend"></div>
                 </div>
                 
                 <!-- 统计面板 -->
@@ -479,6 +643,14 @@
                     <h3>📊 描述性统计</h3>
                     <div class="stats-grid" id="statsGrid">
                         <div class="loading">请选择股票并加载数据...</div>
+                    </div>
+                </div>
+                
+                <!-- 信号分析面板 -->
+                <div class="stats-panel" id="signalsPanelContainer">
+                    <h3>🎯 交易信号分析</h3>
+                    <div id="signalsPanel">
+                        <div class="loading">请先加载数据...</div>
                     </div>
                 </div>
             </div>
@@ -502,9 +674,10 @@
                 // 构建CSV文件路径
                 const csvPath = `data/${stockFile}_daily.csv`;
                 console.log('正在加载:', csvPath);
+                // 移除alert，改用console.log
                 
                 // 加载CSV数据
-                const response = await fetch(csvPath);
+                const response = await fetch(csvPath + '?t=' + new Date().getTime()); // 添加时间戳防止缓存
                 
                 if (!response.ok) {
                     throw new Error(`HTTP ${response.status}: ${response.statusText}`);
@@ -519,6 +692,7 @@
                 // 解析CSV
                 const lines = cleanCSV.trim().split('\n');
                 console.log('CSV行数:', lines.length);
+                console.log('第一行原始内容:', lines[0]);
                 
                 if (lines.length < 2) {
                     throw new Error('CSV文件数据不足');
@@ -527,6 +701,7 @@
                 // 解析表头，建立列名到索引的映射
                 const headers = lines[0].split(',').map(h => h.trim());
                 console.log('CSV表头:', headers);
+                // 移除alert，改用console.log
                 
                 // 建立列名映射
                 const colIndex = {};
@@ -536,14 +711,29 @@
                 
                 console.log('列名映射:', colIndex);
                 
-                // 验证必需的列是否存在
-                const requiredCols = ['trade_date', 'open', 'high', 'low', 'close', 'vol'];
-                const missingCols = requiredCols.filter(col => colIndex[col] === undefined);
-                if (missingCols.length > 0) {
-                    throw new Error(`CSV文件缺少必需的列: ${missingCols.join(', ')}`);
+                // 验证必需的列是否存在（支持trade_date或date）
+                const dateCol = colIndex['trade_date'] !== undefined ? 'trade_date' : (colIndex['date'] !== undefined ? 'date' : null);
+                const volumeCol = colIndex['vol'] !== undefined ? 'vol' : (colIndex['volume'] !== undefined ? 'volume' : null);
+                
+                if (!dateCol) {
+                    throw new Error(`CSV文件缺少日期列。找到的列: ${headers.join(', ')}`);
                 }
                 
+                if (!volumeCol) {
+                    throw new Error(`CSV文件缺少成交量列。找到的列: ${headers.join(', ')}`);
+                }
+                
+                const requiredCols = [dateCol, 'open', 'high', 'low', 'close', volumeCol];
+                const missingCols = requiredCols.filter(col => colIndex[col] === undefined);
+                if (missingCols.length > 0) {
+                    throw new Error(`CSV文件缺少必需的列: ${missingCols.join(', ')}\n\n找到的列: ${headers.join(', ')}`);
+                }
+                
+                console.log('使用日期列:', dateCol);
+                console.log('使用成交量列:', volumeCol);
+                
                 stockData = [];
+                let skippedLines = 0;
                 
                 for (let i = 1; i < lines.length; i++) {
                     const line = lines[i].trim();
@@ -555,16 +745,17 @@
                     const cleanValue = (v) => v.replace(/^"|"$/g, '').trim();
                     
                     // 使用列名映射获取值，而不是硬编码索引
-                    const date = cleanValue(values[colIndex['trade_date']]);
+                    const date = cleanValue(values[colIndex[dateCol]]);
                     const open = parseFloat(cleanValue(values[colIndex['open']]));
                     const high = parseFloat(cleanValue(values[colIndex['high']]));
                     const low = parseFloat(cleanValue(values[colIndex['low']]));
                     const close = parseFloat(cleanValue(values[colIndex['close']]));
-                    const volume = parseFloat(cleanValue(values[colIndex['vol']]));
+                    const volume = parseFloat(cleanValue(values[colIndex[volumeCol]]));
                     
                     // 验证数据
                     if (!date || isNaN(open) || isNaN(high) || isNaN(low) || isNaN(close) || isNaN(volume)) {
                         console.warn(`第${i+1}行数据无效，跳过:`, values);
+                        skippedLines++;
                         continue;
                     }
                     
@@ -578,7 +769,7 @@
                     });
                 }
                 
-                console.log('解析后的数据条数:', stockData.length);
+                console.log(`解析完成: 成功${stockData.length}条，跳过${skippedLines}条`);
                 
                 if (stockData.length === 0) {
                     throw new Error('没有有效数据');
@@ -609,34 +800,31 @@
         // ============ 技术指标计算 ============
         
         // 计算MA
+        // ============ MA计算（返回带时间的数据） ============
         function calculateMA(data, periods) {
             const result = {};
             periods.forEach(period => {
                 result[period] = [];
-                for (let i = 0; i < data.length; i++) {
-                    if (i < period - 1) {
-                        result[period].push(null);
-                    } else {
-                        let sum = 0;
-                        for (let j = 0; j < period; j++) {
-                            sum += data[i - j].close;
-                        }
-                        result[period].push(sum / period);
+                for (let i = period - 1; i < data.length; i++) {
+                    let sum = 0;
+                    for (let j = 0; j < period; j++) {
+                        sum += data[i - j].close;
                     }
+                    result[period].push({
+                        time: data[i].date,
+                        value: sum / period
+                    });
                 }
             });
             return result;
         }
         
         // 计算RSI
+        // ============ RSI计算（返回带时间的数据） ============
         function calculateRSI(data, period) {
             const result = [];
-            for (let i = 0; i < data.length; i++) {
-                if (i < period) {
-                    result.push(null);
-                    continue;
-                }
-                
+            
+            for (let i = period; i < data.length; i++) {
                 let gains = 0, losses = 0;
                 for (let j = 0; j < period; j++) {
                     const change = data[i - j].close - data[i - j - 1].close;
@@ -647,12 +835,17 @@
                 const avgGain = gains / period;
                 const avgLoss = losses / period;
                 const rs = avgGain / avgLoss;
-                result.push(100 - (100 / (1 + rs)));
+                result.push({
+                    time: data[i].date,
+                    value: 100 - (100 / (1 + rs))
+                });
             }
+            
             return result;
         }
         
         // 计算MACD
+        // ============ 新增：MACD计算（返回带时间的数据） ============
         function calculateMACD(data, fast, slow, signal) {
             // 计算EMA
             function ema(prices, period) {
@@ -678,64 +871,81 @@
             const emaFast = ema(closes, fast);
             const emaSlow = ema(closes, slow);
             
-            const dif = emaFast.map((val, idx) => val - emaSlow[idx]);
-            const dea = ema(dif.filter(d => d !== undefined), signal);
-            
-            // 对齐数组
-            const macd = [];
-            let deaIdx = 0;
-            for (let i = 0; i < data.length; i++) {
-                if (i < slow + signal - 2) {
-                    macd.push(null);
-                } else {
-                    macd.push((dif[i] - dea[deaIdx]) * 2);
-                    deaIdx++;
-                }
+            // 计算DIF（从slow-1开始有有效值）
+            const dif = [];
+            for (let i = slow - 1; i < data.length; i++) {
+                dif.push({
+                    time: data[i].date,
+                    value: emaFast[i] - emaSlow[i]
+                });
             }
             
-            return {
-                dif: dif,
-                dea: dea,
-                macd: macd
-            };
+            // 计算DEA（对DIF做EMA）
+            const difValues = dif.map(d => d.value);
+            const deaValues = ema(difValues, signal);
+            
+            const dea = [];
+            for (let i = signal - 1; i < difValues.length; i++) {
+                dea.push({
+                    time: dif[i].time,
+                    value: deaValues[i]
+                });
+            }
+            
+            // 计算MACD柱
+            const macd = [];
+            for (let i = 0; i < dea.length; i++) {
+                macd.push({
+                    time: dea[i].time,
+                    value: (dif[i + signal - 1].value - dea[i].value) * 2
+                });
+            }
+            
+            return { dif, dea, macd };
         }
         
-        // ============ 新增：布林带计算 ============
+        // ============ 布林带计算（返回带时间的数据） ============
         function calculateBollingerBands(data, period, stdDev) {
             const middle = [];
             const upper = [];
             const lower = [];
             
-            for (let i = 0; i < data.length; i++) {
-                if (i < period - 1) {
-                    middle.push(null);
-                    upper.push(null);
-                    lower.push(null);
-                } else {
-                    // 计算移动平均
-                    let sum = 0;
-                    for (let j = 0; j < period; j++) {
-                        sum += data[i - j].close;
-                    }
-                    const ma = sum / period;
-                    middle.push(ma);
-                    
-                    // 计算标准差
-                    let variance = 0;
-                    for (let j = 0; j < period; j++) {
-                        variance += Math.pow(data[i - j].close - ma, 2);
-                    }
-                    const std = Math.sqrt(variance / period);
-                    
-                    upper.push(ma + stdDev * std);
-                    lower.push(ma - stdDev * std);
+            for (let i = period - 1; i < data.length; i++) {
+                // 计算移动平均
+                let sum = 0;
+                for (let j = 0; j < period; j++) {
+                    sum += data[i - j].close;
                 }
+                const ma = sum / period;
+                
+                // 计算标准差
+                let variance = 0;
+                for (let j = 0; j < period; j++) {
+                    variance += Math.pow(data[i - j].close - ma, 2);
+                }
+                const std = Math.sqrt(variance / period);
+                
+                middle.push({
+                    time: data[i].date,
+                    value: ma
+                });
+                
+                upper.push({
+                    time: data[i].date,
+                    value: ma + stdDev * std
+                });
+                
+                lower.push({
+                    time: data[i].date,
+                    value: ma - stdDev * std
+                });
             }
             
             return { middle, upper, lower };
         }
         
         // ============ 新增：DMI/ADX计算 ============
+        // ============ DMI/ADX计算（返回带时间的数据） ============
         function calculateDMIADX(data, period) {
             const tr = []; // True Range
             const plusDM = []; // +DM
@@ -774,47 +984,44 @@
             const smoothedPlusDM = wilderSmoothing(plusDM, period);
             const smoothedMinusDM = wilderSmoothing(minusDM, period);
             
-            // 计算+DI和-DI
+            // 计算+DI和-DI（从period-1开始有有效值）
             const plusDI = [];
             const minusDI = [];
-            const dx = [];
             
-            for (let i = 0; i < data.length; i++) {
-                if (i < period - 1) {
-                    plusDI.push(null);
-                    minusDI.push(null);
-                    dx.push(null);
-                } else {
-                    const pdi = (smoothedPlusDM[i] / smoothedTR[i]) * 100;
-                    const mdi = (smoothedMinusDM[i] / smoothedTR[i]) * 100;
-                    plusDI.push(pdi);
-                    minusDI.push(mdi);
-                    
-                    const adx = (pdi + mdi) === 0 ? 0 : Math.abs((pdi - mdi) / (pdi + mdi)) * 100;
-                    dx.push(adx);
-                }
+            for (let i = period - 1; i < data.length; i++) {
+                const pdi = (smoothedPlusDM[i] / smoothedTR[i]) * 100;
+                const mdi = (smoothedMinusDM[i] / smoothedTR[i]) * 100;
+                
+                plusDI.push({
+                    time: data[i].date,
+                    value: pdi
+                });
+                
+                minusDI.push({
+                    time: data[i].date,
+                    value: mdi
+                });
             }
             
-            // 计算ADX（DX的平滑平均）
-            const adx = wilderSmoothing(dx.filter(d => d !== null), period);
+            // 计算DX
+            const dx = plusDI.map((p, idx) => ({
+                time: p.time,
+                value: (p.value + minusDI[idx].value) === 0 ? 0 : Math.abs((p.value - minusDI[idx].value) / (p.value + minusDI[idx].value)) * 100
+            }));
             
-            // 对齐ADX数组
-            const adxResult = [];
-            let adxIdx = 0;
-            for (let i = 0; i < data.length; i++) {
-                if (i < 2 * period - 2) {
-                    adxResult.push(null);
-                } else {
-                    adxResult.push(adx[adxIdx]);
-                    adxIdx++;
-                }
+            // 计算ADX（DX的Wilder平滑）
+            const dxValues = dx.map(d => d.value);
+            const adxValues = wilderSmoothing(dxValues, period);
+            
+            const adx = [];
+            for (let i = period - 1; i < dx.length; i++) {
+                adx.push({
+                    time: dx[i].time,
+                    value: adxValues[i]
+                });
             }
             
-            return {
-                plusDI: plusDI,
-                minusDI: minusDI,
-                adx: adxResult
-            };
+            return { plusDI, minusDI, adx };
         }
         
         // Wilder's Smoothing
@@ -839,52 +1046,59 @@
         }
         
         // ============ 新增：KDJ计算 ============
+        // ============ KDJ计算（返回带时间的数据） ============
         function calculateKDJ(data, rsvPeriod, kPeriod, dPeriod) {
             const k = [];
             const d = [];
             const j = [];
             
-            for (let i = 0; i < data.length; i++) {
-                if (i < rsvPeriod - 1) {
-                    k.push(null);
-                    d.push(null);
-                    j.push(null);
-                    continue;
-                }
-                
+            let prevK = 50; // 初始K值
+            let prevD = 50; // 初始D值
+            
+            for (let i = rsvPeriod - 1; i < data.length; i++) {
                 // 计算RSV
                 let lowest = data[i].low;
                 let highest = data[i].high;
                 
-                for (let j = 0; j < rsvPeriod; j++) {
-                    lowest = Math.min(lowest, data[i - j].low);
-                    highest = Math.max(highest, data[i - j].high);
+                for (let jj = 0; jj < rsvPeriod; jj++) {
+                    lowest = Math.min(lowest, data[i - jj].low);
+                    highest = Math.max(highest, data[i - jj].high);
                 }
                 
                 const rsv = highest === lowest ? 50 : ((data[i].close - lowest) / (highest - lowest)) * 100;
                 
                 // 计算K值
-                if (i === rsvPeriod - 1) {
-                    k[i] = (2 / 3) * 50 + (1 / 3) * rsv; // 初始K值=50
-                } else {
-                    k[i] = (kPeriod - 1) / kPeriod * k[i - 1] + (1 / kPeriod) * rsv;
-                }
+                const kValue = (kPeriod - 1) / kPeriod * prevK + (1 / kPeriod) * rsv;
                 
                 // 计算D值
-                if (i === rsvPeriod - 1) {
-                    d[i] = (2 / 3) * 50 + (1 / 3) * k[i]; // 初始D值=50
-                } else {
-                    d[i] = (dPeriod - 1) / dPeriod * d[i - 1] + (1 / dPeriod) * k[i];
-                }
+                const dValue = (dPeriod - 1) / dPeriod * prevD + (1 / dPeriod) * kValue;
                 
                 // 计算J值
-                j[i] = 3 * k[i] - 2 * d[i];
+                const jValue = 3 * kValue - 2 * dValue;
+                
+                k.push({
+                    time: data[i].date,
+                    value: kValue
+                });
+                
+                d.push({
+                    time: data[i].date,
+                    value: dValue
+                });
+                
+                j.push({
+                    time: data[i].date,
+                    value: jValue
+                });
+                
+                prevK = kValue;
+                prevD = dValue;
             }
             
             return { k, d, j };
         }
         
-        // ============ 新增：VWAP计算 ============
+        // ============ VWAP计算（返回带时间的数据） ============
         function calculateVWAP(data) {
             const vwap = [];
             let cumulativeVolumePrice = 0;
@@ -897,7 +1111,10 @@
                 cumulativeVolumePrice += typicalPrice * data[i].volume;
                 cumulativeVolume += data[i].volume;
                 
-                vwap.push(cumulativeVolumePrice / cumulativeVolume);
+                vwap.push({
+                    time: data[i].date,
+                    value: cumulativeVolumePrice / cumulativeVolume
+                });
             }
             
             return vwap;
@@ -1004,18 +1221,7 @@
                             lastValueVisible: false,
                         });
                         
-                        const maLineData = [];
-                        for (let i = 0; i < stockData.length; i++) {
-                            if (maData[period][i] !== null && maData[period][i] !== undefined) {
-                                maLineData.push({
-                                    time: stockData[i].date,
-                                    value: maData[period][i]
-                                });
-                            }
-                        }
-                        
-                        console.log(`MA${period}数据条数:`, maLineData.length);
-                        maSeries.setData(maLineData);
+                        maSeries.setData(maData[period]);
                     });
                 }
                 
@@ -1066,12 +1272,7 @@
                 priceLineVisible: false,
             });
             
-            const rsiLineData = rsiData.map((val, idx) => ({
-                time: stockData[idx].date,
-                value: val,
-            })).filter(d => d.value !== null);
-            
-            rsiSeries.setData(rsiLineData);
+            rsiSeries.setData(rsiData);
             
             // 添加超买超卖线
             const overboughtLine = chart.addLineSeries({
@@ -1081,7 +1282,7 @@
                 priceLineVisible: false,
                 lastValueVisible: false,
             });
-            overboughtLine.setData(rsiLineData.map(d => ({ ...d, value: 70 })));
+            overboughtLine.setData(rsiData.map(d => ({ ...d, value: 70 })));
             
             const oversoldLine = chart.addLineSeries({
                 color: '#3fb950',
@@ -1090,7 +1291,7 @@
                 priceLineVisible: false,
                 lastValueVisible: false,
             });
-            oversoldLine.setData(rsiLineData.map(d => ({ ...d, value: 30 })));
+            oversoldLine.setData(rsiData.map(d => ({ ...d, value: 30 })));
             
             chart.timeScale().fitContent();
             charts.rsi = chart;
@@ -1133,12 +1334,7 @@
                 priceLineVisible: false,
             });
             
-            const difData = macdResult.dif.map((val, idx) => ({
-                time: stockData[idx].date,
-                value: val,
-            })).filter(d => d.value !== undefined);
-            
-            difSeries.setData(difData);
+            difSeries.setData(macdResult.dif);
             
             // DEA线
             const deaSeries = chart.addLineSeries({
@@ -1147,12 +1343,22 @@
                 priceLineVisible: false,
             });
             
-            const deaData = macdResult.dea.map((val, idx) => ({
-                time: stockData[idx + params[0] + params[2] - 2].date,
-                value: val,
-            })).filter(d => d.value !== undefined);
+            deaSeries.setData(macdResult.dea);
             
-            deaSeries.setData(deaData);
+            // MACD柱
+            const macdSeries = chart.addHistogramSeries({
+                color: '#3fb950',
+                priceFormat: {
+                    type: 'volume',
+                },
+                priceLineVisible: false,
+            });
+            
+            macdSeries.setData(macdResult.macd.map(d => ({
+                time: d.time,
+                value: d.value,
+                color: d.value >= 0 ? '#3fb950' : '#f85149',
+            })));
             
             chart.timeScale().fitContent();
             charts.macd = chart;
@@ -1188,12 +1394,7 @@
                     lastValueVisible: false,
                 });
                 
-                const middleData = bb.middle.map((val, idx) => ({
-                    time: stockData[idx].date,
-                    value: val,
-                })).filter(d => d.value !== null);
-                
-                middleSeries.setData(middleData);
+                middleSeries.setData(bb.middle);
                 
                 // 上轨
                 const upperSeries = chart.addLineSeries({
@@ -1204,12 +1405,7 @@
                     lastValueVisible: false,
                 });
                 
-                const upperData = bb.upper.map((val, idx) => ({
-                    time: stockData[idx].date,
-                    value: val,
-                })).filter(d => d.value !== null);
-                
-                upperSeries.setData(upperData);
+                upperSeries.setData(bb.upper);
                 
                 // 下轨
                 const lowerSeries = chart.addLineSeries({
@@ -1220,12 +1416,7 @@
                     lastValueVisible: false,
                 });
                 
-                const lowerData = bb.lower.map((val, idx) => ({
-                    time: stockData[idx].date,
-                    value: val,
-                })).filter(d => d.value !== null);
-                
-                lowerSeries.setData(lowerData);
+                lowerSeries.setData(bb.lower);
                 
                 console.log('布林带创建成功！');
                 
@@ -1276,12 +1467,7 @@
                 priceLineVisible: false,
             });
             
-            const plusDIData = dmiResult.plusDI.map((val, idx) => ({
-                time: stockData[idx].date,
-                value: val,
-            })).filter(d => d.value !== null);
-            
-            plusDISeries.setData(plusDIData);
+            plusDISeries.setData(dmiResult.plusDI);
             
             // -DI线
             const minusDISeries = chart.addLineSeries({
@@ -1290,12 +1476,7 @@
                 priceLineVisible: false,
             });
             
-            const minusDIData = dmiResult.minusDI.map((val, idx) => ({
-                time: stockData[idx].date,
-                value: val,
-            })).filter(d => d.value !== null);
-            
-            minusDISeries.setData(minusDIData);
+            minusDISeries.setData(dmiResult.minusDI);
             
             // ADX线
             const adxSeries = chart.addLineSeries({
@@ -1304,12 +1485,7 @@
                 priceLineVisible: false,
             });
             
-            const adxData = dmiResult.adx.map((val, idx) => ({
-                time: stockData[idx].date,
-                value: val,
-            })).filter(d => d.value !== null);
-            
-            adxSeries.setData(adxData);
+            adxSeries.setData(dmiResult.adx);
             
             // 添加ADX=25参考线
             const refLine = chart.addLineSeries({
@@ -1319,7 +1495,7 @@
                 priceLineVisible: false,
                 lastValueVisible: false,
             });
-            refLine.setData(adxData.map(d => ({ ...d, value: 25 })));
+            refLine.setData(dmiResult.adx.map(d => ({ ...d, value: 25 })));
             
             chart.timeScale().fitContent();
             charts.dmi = chart;
@@ -1370,12 +1546,7 @@
                 priceLineVisible: false,
             });
             
-            const kData = kdjResult.k.map((val, idx) => ({
-                time: stockData[idx].date,
-                value: val,
-            })).filter(d => d.value !== null);
-            
-            kSeries.setData(kData);
+            kSeries.setData(kdjResult.k);
             
             // D线
             const dSeries = chart.addLineSeries({
@@ -1384,12 +1555,7 @@
                 priceLineVisible: false,
             });
             
-            const dData = kdjResult.d.map((val, idx) => ({
-                time: stockData[idx].date,
-                value: val,
-            })).filter(d => d.value !== null);
-            
-            dSeries.setData(dData);
+            dSeries.setData(kdjResult.d);
             
             // J线
             const jSeries = chart.addLineSeries({
@@ -1398,12 +1564,7 @@
                 priceLineVisible: false,
             });
             
-            const jData = kdjResult.j.map((val, idx) => ({
-                time: stockData[idx].date,
-                value: val,
-            })).filter(d => d.value !== null);
-            
-            jSeries.setData(jData);
+            jSeries.setData(kdjResult.j);
             
             // 添加超买超卖线
             const overboughtLine = chart.addLineSeries({
@@ -1413,7 +1574,7 @@
                 priceLineVisible: false,
                 lastValueVisible: false,
             });
-            overboughtLine.setData(kData.map(d => ({ ...d, value: 80 })));
+            overboughtLine.setData(kdjResult.k.map(d => ({ ...d, value: 80 })));
             
             const oversoldLine = chart.addLineSeries({
                 color: '#8b949e',
@@ -1422,7 +1583,7 @@
                 priceLineVisible: false,
                 lastValueVisible: false,
             });
-            oversoldLine.setData(kData.map(d => ({ ...d, value: 20 })));
+            oversoldLine.setData(kdjResult.k.map(d => ({ ...d, value: 20 })));
             
             chart.timeScale().fitContent();
             charts.kdj = chart;
@@ -1453,12 +1614,7 @@
                     lastValueVisible: true,
                 });
                 
-                const vwapData = vwap.map((val, idx) => ({
-                    time: stockData[idx].date,
-                    value: val,
-                }));
-                
-                vwapSeries.setData(vwapData);
+                vwapSeries.setData(vwap);
                 
                 console.log('VWAP创建成功！');
                 
@@ -1520,6 +1676,164 @@
             document.getElementById('statsGrid').innerHTML = statsHTML;
         }
         
+        // ============ 信号分析 ============
+        
+        function analyzeSignals() {
+            if (stockData.length === 0) return;
+            
+            const signals = [];
+            
+            // 1. RSI信号
+            const rsiPeriod = parseInt(document.getElementById('rsiPeriod').value);
+            const rsiData = calculateRSI(stockData, rsiPeriod);
+            if (rsiData.length > 0) {
+                const latestRSI = rsiData[rsiData.length - 1].value;
+                if (latestRSI < 30) {
+                    signals.push({ indicator: 'RSI', signal: '买入', reason: `RSI=${latestRSI.toFixed(2)} < 30 (超卖)`, strength: '强' });
+                } else if (latestRSI > 70) {
+                    signals.push({ indicator: 'RSI', signal: '卖出', reason: `RSI=${latestRSI.toFixed(2)} > 70 (超买)`, strength: '强' });
+                } else {
+                    signals.push({ indicator: 'RSI', signal: '中性', reason: `RSI=${latestRSI.toFixed(2)}`, strength: '弱' });
+                }
+            }
+            
+            // 2. MACD信号
+            const macdParams = document.getElementById('macdParams').value.split(',').map(p => parseInt(p.trim()));
+            const macdResult = calculateMACD(stockData, macdParams[0], macdParams[1], macdParams[2]);
+            if (macdResult.dif.length >= 2 && macdResult.dea.length >= 2) {
+                const difLatest = macdResult.dif[macdResult.dif.length - 1].value;
+                const deaLatest = macdResult.dea[macdResult.dea.length - 1].value;
+                const difPrev = macdResult.dif[macdResult.dif.length - 2].value;
+                const deaPrev = macdResult.dea[macdResult.dea.length - 2].value;
+                
+                if (difPrev < deaPrev && difLatest > deaLatest) {
+                    signals.push({ indicator: 'MACD', signal: '买入', reason: 'DIF上穿DEA (金叉)', strength: '强' });
+                } else if (difPrev > deaPrev && difLatest < deaLatest) {
+                    signals.push({ indicator: 'MACD', signal: '卖出', reason: 'DIF下穿DEA (死叉)', strength: '强' });
+                } else if (difLatest > deaLatest) {
+                    signals.push({ indicator: 'MACD', signal: '中性偏多', reason: 'DIF > DEA', strength: '中' });
+                } else {
+                    signals.push({ indicator: 'MACD', signal: '中性偏空', reason: 'DIF < DEA', strength: '中' });
+                }
+            }
+            
+            // 3. 布林带信号
+            const bollingerPeriod = parseInt(document.getElementById('bollingerPeriod').value);
+            const bollingerStdDev = parseFloat(document.getElementById('bollingerStdDev').value);
+            const bb = calculateBollingerBands(stockData, bollingerPeriod, bollingerStdDev);
+            if (bb.upper.length > 0 && bb.lower.length > 0) {
+                const latestClose = stockData[stockData.length - 1].close;
+                const latestUpper = bb.upper[bb.upper.length - 1].value;
+                const latestLower = bb.lower[bb.lower.length - 1].value;
+                const latestMiddle = bb.middle[bb.middle.length - 1].value;
+                
+                if (latestClose <= latestLower) {
+                    signals.push({ indicator: '布林带', signal: '买入', reason: '价格触及下轨', strength: '中' });
+                } else if (latestClose >= latestUpper) {
+                    signals.push({ indicator: '布林带', signal: '卖出', reason: '价格触及上轨', strength: '中' });
+                } else if (latestClose < latestMiddle) {
+                    signals.push({ indicator: '布林带', signal: '中性偏多', reason: '价格在下轨与中轨之间', strength: '弱' });
+                } else {
+                    signals.push({ indicator: '布林带', signal: '中性偏空', reason: '价格在上轨与中轨之间', strength: '弱' });
+                }
+            }
+            
+            // 4. KDJ信号
+            const kdjRsvPeriod = parseInt(document.getElementById('kdjRsvPeriod').value);
+            const kdjKPeriod = parseInt(document.getElementById('kdjKPeriod').value);
+            const kdjDPeriod = parseInt(document.getElementById('kdjDPeriod').value);
+            const kdjResult = calculateKDJ(stockData, kdjRsvPeriod, kdjKPeriod, kdjDPeriod);
+            if (kdjResult.k.length >= 2 && kdjResult.d.length >= 2) {
+                const kLatest = kdjResult.k[kdjResult.k.length - 1].value;
+                const dLatest = kdjResult.d[kdjResult.d.length - 1].value;
+                const kPrev = kdjResult.k[kdjResult.k.length - 2].value;
+                const dPrev = kdjResult.d[kdjResult.d.length - 2].value;
+                
+                if (kPrev < dPrev && kLatest > dLatest) {
+                    signals.push({ indicator: 'KDJ', signal: '买入', reason: 'K线上穿D线 (金叉)', strength: '强' });
+                } else if (kPrev > dPrev && kLatest < dLatest) {
+                    signals.push({ indicator: 'KDJ', signal: '卖出', reason: 'K线下穿D线 (死叉)', strength: '强' });
+                } else if (kLatest > dLatest) {
+                    signals.push({ indicator: 'KDJ', signal: '中性偏多', reason: 'K > D', strength: '中' });
+                } else {
+                    signals.push({ indicator: 'KDJ', signal: '中性偏空', reason: 'K < D', strength: '中' });
+                }
+            }
+            
+            // 5. DMI信号
+            const dmiPeriod = parseInt(document.getElementById('dmiPeriod').value);
+            const dmiResult = calculateDMIADX(stockData, dmiPeriod);
+            if (dmiResult.plusDI.length >= 2 && dmiResult.minusDI.length >= 2) {
+                const plusDILatest = dmiResult.plusDI[dmiResult.plusDI.length - 1].value;
+                const minusDILatest = dmiResult.minusDI[dmiResult.minusDI.length - 1].value;
+                const plusDIPrev = dmiResult.plusDI[dmiResult.plusDI.length - 2].value;
+                const minusDIPrev = dmiResult.minusDI[dmiResult.minusDI.length - 2].value;
+                
+                if (plusDIPrev < minusDIPrev && plusDILatest > minusDILatest) {
+                    signals.push({ indicator: 'DMI', signal: '买入', reason: '+DI上穿-DI', strength: '强' });
+                } else if (plusDIPrev > minusDIPrev && plusDILatest < minusDILatest) {
+                    signals.push({ indicator: 'DMI', signal: '卖出', reason: '-DI上穿+DI', strength: '强' });
+                } else if (plusDILatest > minusDILatest) {
+                    signals.push({ indicator: 'DMI', signal: '中性偏多', reason: '+DI > -DI', strength: '中' });
+                } else {
+                    signals.push({ indicator: 'DMI', signal: '中性偏空', reason: '+DI < -DI', strength: '中' });
+                }
+            }
+            
+            // 6. MA信号
+            const maPeriods = document.getElementById('maPeriods').value.split(',').map(p => parseInt(p.trim())).filter(p => !isNaN(p));
+            const maData = calculateMA(stockData, maPeriods);
+            const latestClose = stockData[stockData.length - 1].close;
+            
+            maPeriods.forEach(period => {
+                if (maData[period] && maData[period].length > 0) {
+                    const latestMA = maData[period][maData[period].length - 1].value;
+                    if (latestClose > latestMA) {
+                        signals.push({ indicator: `MA${period}`, signal: '买入', reason: `价格 > MA${period}`, strength: '弱' });
+                    } else {
+                        signals.push({ indicator: `MA${period}`, signal: '卖出', reason: `价格 < MA${period}`, strength: '弱' });
+                    }
+                }
+            });
+            
+            // 渲染信号面板
+            renderSignals(signals);
+        }
+        
+        function renderSignals(signals) {
+            const signalsHTML = signals.map(s => `
+                <div class="signal-item ${s.signal === '买入' ? 'signal-buy' : (s.signal === '卖出' ? 'signal-sell' : 'signal-neutral')}">
+                    <div class="signal-header">
+                        <span class="signal-indicator">${s.indicator}</span>
+                        <span class="signal-type ${s.signal === '买入' ? 'buy' : (s.signal === '卖出' ? 'sell' : 'neutral')}">${s.signal}</span>
+                    </div>
+                    <div class="signal-reason">${s.reason}</div>
+                    <div class="signal-strength">强度: ${s.strength}</div>
+                </div>
+            `).join('');
+            
+            const signalsPanel = document.getElementById('signalsPanel');
+            if (signalsPanel) {
+                signalsPanel.innerHTML = signalsHTML;
+            }
+        }
+        
+        // ============ 图例更新函数 ============
+        
+        function updateChartLegend(legendId, items) {
+            const legendDiv = document.getElementById(legendId);
+            if (!legendDiv) return;
+            
+            const legendHTML = items.map(item => `
+                <div class="legend-item">
+                    <div class="legend-color" style="background: ${item.color}; ${item.style || ''}"></div>
+                    <span class="legend-label">${item.label}</span>
+                </div>
+            `).join('');
+            
+            legendDiv.innerHTML = legendHTML;
+        }
+        
         // ============ 主更新函数 ============
         
         function updateCharts() {
@@ -1534,15 +1848,115 @@
             
             // 创建新图表
             createCandlestickChart();
+            
+            // 在主图表上添加布林带和VWAP（必须在K线图创建后）
+            if (document.getElementById('showBollinger').checked) {
+                createBollingerBands();
+            }
+            if (document.getElementById('showVWAP').checked) {
+                createVWAP();
+            }
+            
+            // 创建独立指标图表
             createRSIChart();
             createMACDChart();
-            createBollingerBands();  // 新增：布林带
-            createVWAP();            // 新增：VWAP
-            createDMIADXChart();     // 新增：DMI/ADX
-            createKDJChart();        // 新增：KDJ
+            createDMIADXChart();
+            createKDJChart();
             
-            // 更新统计
+            // 更新统计和信号分析
             updateStats();
+            analyzeSignals();
+            
+            // 更新所有图例
+            updateAllLegends();
+        }
+        
+        // ============ 更新所有图例 ============
+        
+        function updateAllLegends() {
+            // 1. 主图表图例（K线图）
+            const mainLegendItems = [
+                { color: '#f85149', label: '阳线 (上涨)', style: 'height: 12px; border-radius: 2px;' },
+                { color: '#3fb950', label: '阴线 (下跌)', style: 'height: 12px; border-radius: 2px;' },
+                { color: 'rgba(248,81,73,0.5)', label: '成交量 (上涨)', style: 'height: 12px; border-radius: 2px;' },
+                { color: 'rgba(63,185,80,0.5)', label: '成交量 (下跌)', style: 'height: 12px; border-radius: 2px;' }
+            ];
+            
+            // 添加MA线图例
+            if (document.getElementById('showMA').checked) {
+                const periods = document.getElementById('maPeriods').value.split(',').map(p => parseInt(p.trim()));
+                const colors = ['#f85149', '#58a6ff', '#3fb950', '#d2a8ff'];
+                periods.forEach((period, idx) => {
+                    mainLegendItems.push({
+                        color: colors[idx % colors.length],
+                        label: `MA${period}`
+                    });
+                });
+            }
+            
+            // 添加布林带图例
+            if (document.getElementById('showBollinger').checked) {
+                mainLegendItems.push(
+                    { color: '#58a6ff', label: '布林带中轨 (MA)' },
+                    { color: '#f85149', label: '布林带上轨', style: 'border-top: 2px dashed;' },
+                    { color: '#3fb950', label: '布林带下轨', style: 'border-top: 2px dashed;' }
+                );
+            }
+            
+            // 添加VWAP图例
+            if (document.getElementById('showVWAP').checked) {
+                mainLegendItems.push({
+                    color: '#d2a8ff',
+                    label: 'VWAP (成交量加权平均价)',
+                    style: 'border-top: 2px solid;'
+                });
+            }
+            
+            updateChartLegend('mainChartLegend', mainLegendItems);
+            
+            // 2. RSI图表图例
+            if (document.getElementById('showRSI').checked) {
+                const rsiLegendItems = [
+                    { color: '#58a6ff', label: 'RSI线' },
+                    { color: '#f85149', label: '超买线 (70)', style: 'border-top: 2px dashed;' },
+                    { color: '#3fb950', label: '超卖线 (30)', style: 'border-top: 2px dashed;' }
+                ];
+                updateChartLegend('rsiChartLegend', rsiLegendItems);
+            }
+            
+            // 3. MACD图表图例
+            if (document.getElementById('showMACD').checked) {
+                const macdLegendItems = [
+                    { color: '#58a6ff', label: 'DIF线' },
+                    { color: '#f85149', label: 'DEA线' },
+                    { color: '#3fb950', label: 'MACD柱 (正值)', style: 'height: 12px; border-radius: 2px;' },
+                    { color: '#f85149', label: 'MACD柱 (负值)', style: 'height: 12px; border-radius: 2px;' }
+                ];
+                updateChartLegend('macdChartLegend', macdLegendItems);
+            }
+            
+            // 4. DMI图表图例
+            if (document.getElementById('showDMI').checked) {
+                const dmiLegendItems = [
+                    { color: '#58a6ff', label: '+DI (多头力道)' },
+                    { color: '#f85149', label: '-DI (空头力道)' },
+                    { color: '#d2a8ff', label: 'ADX (趋势强度)' },
+                    { color: '#8b949e', label: '参考线 (25)', style: 'border-top: 2px dashed;' }
+                ];
+                updateChartLegend('dmiChartLegend', dmiLegendItems);
+            }
+            
+            // 5. KDJ图表图例
+            if (document.getElementById('showKDJ').checked) {
+                const kdjLegendItems = [
+                    { color: '#58a6ff', label: 'K线 (快线)' },
+                    { color: '#f85149', label: 'D线 (慢线)' },
+                    { color: '#3fb950', label: 'J线 (信号线)' },
+                    { color: '#8b949e', label: '超买线 (80)', style: 'border-top: 2px dashed;' },
+                    { color: '#8b949e', label: '超卖线 (20)', style: 'border-top: 2px dashed;' }
+                ];
+                updateChartLegend('kdjChartLegend', kdjLegendItems);
+            }
         }
         
         // ============ 工具函数 ============

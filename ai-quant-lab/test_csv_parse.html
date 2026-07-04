@@ -3,206 +3,220 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>CSV解析测试 - StockAnalyzer</title>
+    <title>CSV解析测试</title>
     <style>
         body {
             font-family: monospace;
             background: #0d1117;
             color: #c9d1d9;
             padding: 20px;
-            max-width: 1200px;
-            margin: 0 auto;
         }
-        h1 {
-            color: #58a6ff;
-        }
-        .test-section {
+        .log {
             background: #161b22;
             border: 1px solid #30363d;
-            border-radius: 8px;
-            padding: 20px;
-            margin: 20px 0;
+            padding: 15px;
+            margin: 10px 0;
+            border-radius: 6px;
+            white-space: pre-wrap;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+        .error {
+            color: #f85149;
+        }
+        .success {
+            color: #3fb950;
         }
         button {
+            padding: 10px 20px;
             background: #238636;
             color: white;
             border: none;
-            padding: 10px 20px;
             border-radius: 6px;
             cursor: pointer;
-            font-size: 14px;
             margin: 5px;
-        }
-        button:hover {
-            background: #2ea043;
-        }
-        .log {
-            background: #0d1117;
-            border: 1px solid #30363d;
-            border-radius: 6px;
-            padding: 15px;
-            margin-top: 15px;
-            max-height: 400px;
-            overflow-y: auto;
-            font-size: 13px;
-            line-height: 1.6;
-        }
-        .log div {
-            margin: 5px 0;
-        }
-        .success { color: #3fb950; }
-        .error { color: #f85149; }
-        .info { color: #58a6ff; }
-        .warning { color: #d29922; }
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            margin-top: 15px;
-            font-size: 12px;
-        }
-        th, td {
-            border: 1px solid #30363d;
-            padding: 8px;
-            text-align: left;
-        }
-        th {
-            background: #21262d;
-            color: #8b949e;
-        }
-        tr:hover {
-            background: #1c2128;
         }
     </style>
 </head>
 <body>
-    <h1>🧪 CSV解析测试</h1>
-    <p>这个页面测试CSV文件是否能正确解析。</p>
+    <h1>📊 CSV解析诊断工具</h1>
+    <p>这个页面会帮您诊断CSV文件为什么无法正确加载。</p>
     
-    <div class="test-section">
-        <h2>测试1: 加载并解析CSV</h2>
-        <button onclick="testLoadCSV()">开始测试</button>
-        <button onclick="clearLog()">清空日志</button>
-        <div id="log1" class="log"></div>
+    <div>
+        <label>选择股票: </label>
+        <select id="stockSelect">
+            <option value="ningde_times_300750">宁德时代 (300750.SZ)</option>
+            <option value="ping_an_601318">中国平安 (601318.SH)</option>
+            <option value="moutai_600519">贵州茅台 (600519.SH)</option>
+            <option value="petro_china_601857">中国石油 (601857.SH)</option>
+            <option value="byd_002594">比亚迪 (002594.SZ)</option>
+        </select>
+        <button onclick="testCSV()">🔍 测试CSV解析</button>
+        <button onclick="clearLog()">🗑️ 清除日志</button>
     </div>
     
-    <div class="test-section">
-        <h2>测试2: 预览解析后的数据</h2>
-        <div id="preview"></div>
-    </div>
+    <h3>诊断日志:</h3>
+    <div id="log" class="log">点击"测试CSV解析"开始...</div>
     
+    <h3>解析结果:</h3>
+    <div id="result" class="log">等待测试...</div>
+
     <script>
-        let log1 = document.getElementById('log1');
+        let logDiv = document.getElementById('log');
+        let resultDiv = document.getElementById('result');
         
         function log(msg, type = 'info') {
-            const div = document.createElement('div');
-            div.className = type;
-            div.textContent = msg;
-            log1.appendChild(div);
-            log1.scrollTop = log1.scrollHeight;
+            const time = new Date().toLocaleTimeString();
+            const prefix = type === 'error' ? '❌' : (type === 'success' ? '✅' : 'ℹ️');
+            logDiv.innerHTML += `[${time}] ${prefix} ${msg}\n`;
+            logDiv.scrollTop = logDiv.scrollHeight;
+            console.log(msg);
         }
         
         function clearLog() {
-            log1.innerHTML = '';
+            logDiv.innerHTML = '';
+            resultDiv.innerHTML = '等待测试...';
         }
         
-        async function testLoadCSV() {
-            log('开始测试CSV解析...', 'info');
+        async function testCSV() {
+            clearLog();
+            log('开始测试CSV解析...');
+            
+            const select = document.getElementById('stockSelect');
+            const stockFile = select.value;
+            const csvPath = `data/${stockFile}_daily.csv`;
+            
+            log(`CSV文件路径: ${csvPath}`);
             
             try {
-                // 测试加载第一个CSV文件
-                const csvPath = 'data/ningde_times_300750_daily.csv';
-                log(`加载文件: ${csvPath}`, 'info');
-                
-                const response = await fetch(csvPath);
+                // 1. 测试文件是否存在
+                log('步骤1: 加载CSV文件...');
+                const response = await fetch(csvPath + '?t=' + new Date().getTime());
                 
                 if (!response.ok) {
-                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}\n可能的原因：\n1. 文件不存在\n2. 未通过http://访问（需要运行python3 run.py）\n3. data/目录不在正确位置`);
                 }
                 
+                log('步骤1成功: CSV文件已加载', 'success');
+                
+                // 2. 读取内容
+                log('步骤2: 读取CSV内容...');
                 const csvText = await response.text();
-                log(`✅ CSV文件加载成功，数据长度: ${csvText.length} 字符`, 'success');
+                log(`CSV文件大小: ${csvText.length} 字节`);
                 
-                // 移除BOM
+                // 3. 检查BOM
+                if (csvText.charCodeAt(0) === 0xFEFF || csvText.startsWith('\uFEFF')) {
+                    log('检测到BOM标记，正在移除...', 'error');
+                }
                 const cleanCSV = csvText.replace(/^\uFEFF/, '');
-                log('✅ BOM标记已移除', 'success');
                 
-                // 解析CSV
+                // 4. 解析行
                 const lines = cleanCSV.trim().split('\n');
-                log(`✅ CSV共 ${lines.length} 行`, 'success');
+                log(`CSV共有 ${lines.length} 行`);
+                log(`第一行(表头): ${lines[0]}`);
                 
-                // 解析表头
+                // 5. 解析表头
+                log('步骤3: 解析表头...');
                 const headers = lines[0].split(',').map(h => h.trim());
-                log(`✅ CSV表头: ${headers.join(', ')}`, 'success');
+                log(`找到 ${headers.length} 个列: ${headers.join(', ')}`);
                 
-                // 建立列名映射
+                // 6. 建立列名映射
                 const colIndex = {};
                 headers.forEach((header, idx) => {
                     colIndex[header] = idx;
                 });
-                log(`✅ 列名映射: ${JSON.stringify(colIndex)}`, 'success');
                 
-                // 验证必需的列
-                const requiredCols = ['trade_date', 'open', 'high', 'low', 'close', 'vol'];
-                const missingCols = requiredCols.filter(col => colIndex[col] === undefined);
+                // 7. 检查必需列
+                log('步骤4: 检查必需的列...');
                 
-                if (missingCols.length > 0) {
-                    log(`❌ 缺少必需的列: ${missingCols.join(', ')}`, 'error');
-                    return;
+                const hasTradeDate = colIndex['trade_date'] !== undefined;
+                const hasDate = colIndex['date'] !== undefined;
+                const hasVol = colIndex['vol'] !== undefined;
+                const hasVolume = colIndex['volume'] !== undefined;
+                
+                log(`  - trade_date列: ${hasTradeDate ? '✅ 找到' : '❌ 未找到'}`);
+                log(`  - date列: ${hasDate ? '✅ 找到' : '❌ 未找到'}`);
+                log(`  - vol列: ${hasVol ? '✅ 找到' : '❌ 未找到'}`);
+                log(`  - volume列: ${hasVolume ? '✅ 找到' : '❌ 未找到'}`);
+                
+                const dateCol = hasTradeDate ? 'trade_date' : (hasDate ? 'date' : null);
+                const volumeCol = hasVol ? 'vol' : (hasVolume ? 'volume' : null);
+                
+                if (!dateCol) {
+                    throw new Error(`找不到日期列！\n\nCSV文件的列名是: ${headers.join(', ')}\n\n解决方案：\n1. 确保CSV文件包含 trade_date 或 date 列\n2. 检查CSV文件是否正确生成`);
                 }
                 
-                log('✅ 所有必需的列都存在', 'success');
-                
-                // 解析前3行数据
-                log('', 'info');
-                log('解析前3行数据:', 'info');
-                
-                const previewData = [];
-                for (let i = 1; i <= Math.min(3, lines.length - 1); i++) {
-                    const values = lines[i].split(',');
-                    
-                    const date = values[colIndex['trade_date']].trim();
-                    const open = parseFloat(values[colIndex['open']]);
-                    const high = parseFloat(values[colIndex['high']]);
-                    const low = parseFloat(values[colIndex['low']]);
-                    const close = parseFloat(values[colIndex['close']]);
-                    const volume = parseFloat(values[colIndex['vol']]);
-                    
-                    log(`第${i}行: date=${date}, open=${open}, high=${high}, low=${low}, close=${close}, volume=${volume}`, 'info');
-                    
-                    previewData.push({ date, open, high, low, close, volume });
+                if (!volumeCol) {
+                    throw new Error(`找不到成交量列！\n\nCSV文件的列名是: ${headers.join(', ')}\n\n解决方案：\n1. 确保CSV文件包含 vol 或 volume 列\n2. 检查CSV文件是否正确生成`);
                 }
                 
-                // 显示预览表格
-                showPreview(previewData);
+                log(`使用日期列: ${dateCol}`, 'success');
+                log(`使用成交量列: ${volumeCol}`, 'success');
                 
-                log('', 'info');
-                log('✅ CSV解析测试通过！', 'success');
+                // 8. 解析数据
+                log('步骤5: 解析数据行...');
+                const stockData = [];
+                let skipped = 0;
+                
+                for (let i = 1; i < Math.min(lines.length, 10); i++) { // 只解析前10行用于测试
+                    const line = lines[i].trim();
+                    if (!line) continue;
+                    
+                    const values = line.split(',');
+                    
+                    const cleanValue = (v) => v.replace(/^"|"$/g, '').trim();
+                    
+                    const date = cleanValue(values[colIndex[dateCol]]);
+                    const open = parseFloat(cleanValue(values[colIndex['open']]));
+                    const high = parseFloat(cleanValue(values[colIndex['high']]));
+                    const low = parseFloat(cleanValue(values[colIndex['low']]));
+                    const close = parseFloat(cleanValue(values[colIndex['close']]));
+                    const volume = parseFloat(cleanValue(values[colIndex[volumeCol]]));
+                    
+                    log(`第${i}行: date=${date}, open=${open}, high=${high}, low=${low}, close=${close}, volume=${volume}`);
+                    
+                    if (!date || isNaN(open) || isNaN(high) || isNaN(low) || isNaN(close) || isNaN(volume)) {
+                        log(`  第${i}行数据无效，跳过`, 'error');
+                        skipped++;
+                        continue;
+                    }
+                    
+                    stockData.push({
+                        date: date,
+                        open: open,
+                        high: high,
+                        low: low,
+                        close: close,
+                        volume: volume
+                    });
+                }
+                
+                log(`步骤5完成: 成功解析 ${stockData.length} 行，跳过 ${skipped} 行`, 'success');
+                
+                // 9. 显示结果
+                log('步骤6: 显示解析结果...');
+                let resultHTML = '';
+                resultHTML += `✅ CSV解析成功！\n\n`;
+                resultHTML += `文件路径: ${csvPath}\n`;
+                resultHTML += `总数据行数: ${lines.length - 1}\n`;
+                resultHTML += `成功解析: ${stockData.length} 行（仅测试前10行）\n\n`;
+                resultHTML += `前5条数据:\n`;
+                
+                stockData.slice(0, 5).forEach((d, idx) => {
+                    resultHTML += `\n[${idx+1}] ${d.date}: open=${d.open}, high=${d.high}, low=${d.low}, close=${d.close}, volume=${d.volume}`;
+                });
+                
+                resultDiv.className = 'log success';
+                resultDiv.innerText = resultHTML;
+                
+                log('🎉 测试完成！CSV文件可以正确解析。', 'success');
+                log('如果主页面仍然报错，请：\n1. 清除浏览器缓存（Cmd+Shift+R）\n2. 检查浏览器控制台（F12）的错误信息');
                 
             } catch (error) {
-                log(`❌ 测试失败: ${error.message}`, 'error');
-                console.error(error);
+                log(`测试失败: ${error.message}`, 'error');
+                resultDiv.className = 'log error';
+                resultDiv.innerText = `❌ 测试失败！\n\n错误: ${error.message}`;
             }
-        }
-        
-        function showPreview(data) {
-            const preview = document.getElementById('preview');
-            
-            let html = '<table><tr><th>日期</th><th>开盘</th><th>最高</th><th>最低</th><th>收盘</th><th>成交量</th></tr>';
-            
-            data.forEach(row => {
-                html += `<tr>
-                    <td>${row.date}</td>
-                    <td>${row.open}</td>
-                    <td>${row.high}</td>
-                    <td>${row.low}</td>
-                    <td>${row.close}</td>
-                    <td>${row.volume}</td>
-                </tr>`;
-            });
-            
-            html += '</table>';
-            
-            preview.innerHTML = html;
         }
     </script>
 </body>

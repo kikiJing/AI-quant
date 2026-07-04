@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>启动服务器 - StockAnalyzer</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+        
+        .container {
+            background: white;
+            border-radius: 20px;
+            padding: 50px;
+            max-width: 600px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+        }
+        
+        h1 {
+            color: #667eea;
+            margin-bottom: 10px;
+            font-size: 32px;
+        }
+        
+        .subtitle {
+            color: #666;
+            margin-bottom: 30px;
+            font-size: 16px;
+        }
+        
+        .step {
+            background: #f8f9fa;
+            border-left: 4px solid #667eea;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 8px;
+        }
+        
+        .step h3 {
+            color: #333;
+            margin-bottom: 10px;
+            font-size: 18px;
+        }
+        
+        .code {
+            background: #2d3748;
+            color: #68d391;
+            padding: 15px;
+            border-radius: 8px;
+            font-family: 'Courier New', monospace;
+            margin: 10px 0;
+            overflow-x: auto;
+            font-size: 14px;
+        }
+        
+        .btn {
+            display: inline-block;
+            background: #667eea;
+            color: white;
+            padding: 15px 30px;
+            border-radius: 8px;
+            text-decoration: none;
+            font-weight: 600;
+            margin: 10px 5px;
+            transition: all 0.3s;
+            border: none;
+            cursor: pointer;
+            font-size: 16px;
+        }
+        
+        .btn:hover {
+            background: #764ba2;
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(102, 126, 234, 0.4);
+        }
+        
+        .success {
+            background: #d4edda;
+            border: 1px solid #c3e6cb;
+            color: #155724;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 20px 0;
+        }
+        
+        .warning {
+            background: #fff3cd;
+            border: 1px solid #ffeaa7;
+            color: #856404;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 20px 0;
+        }
+        
+        .url {
+            background: #667eea;
+            color: white;
+            padding: 15px;
+            border-radius: 8px;
+            font-size: 18px;
+            text-align: center;
+            margin: 20px 0;
+            font-weight: 600;
+        }
+        
+        .url a {
+            color: white;
+            text-decoration: none;
+        }
+        
+        .url a:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🚀 StockAnalyzer 启动指南</h1>
+        <p class="subtitle">AI Quant Lab - 股票技术分析工具</p>
+        
+        <div class="success">
+            ✅ <strong>代码已准备就绪！</strong><br>
+            所有文件都在 <code>/Users/kikijing/Desktop/AI quant/ai-quant-lab/</code>
+        </div>
+        
+        <div class="step">
+            <h3>📝 步骤1：打开终端</h3>
+            <p>按 <kbd>Cmd + 空格</kbd>，输入 <code>Terminal</code>，回车</p>
+        </div>
+        
+        <div class="step">
+            <h3>📂 步骤2：进入项目目录</h3>
+            <div class="code">cd "/Users/kikijing/Desktop/AI quant/ai-quant-lab"</div>
+        </div>
+        
+        <div class="step">
+            <h3>🌐 步骤3：启动本地服务器</h3>
+            <div class="code">python3 run.py</div>
+            <p style="margin-top: 10px; color: #666;">或者：</p>
+            <div class="code">python3 -m http.server 8000</div>
+        </div>
+        
+        <div class="step">
+            <h3>🎉 步骤4：访问网页</h3>
+            <p>服务器会自动打开浏览器，如果没有，手动访问：</p>
+            <div class="url">
+                <a href="http://localhost:8000/index.html" target="_blank">http://localhost:8000/index.html</a>
+            </div>
+        </div>
+        
+        <div class="warning">
+            ⚠️ <strong>重要提示</strong><br>
+            不要直接双击打开 <code>index.html</code> 文件！<br>
+            必须通过 <code>http://localhost:8000</code> 访问，否则无法加载CSV数据。
+        </div>
+        
+        <div style="text-align: center; margin-top: 30px;">
+            <a href="http://localhost:8000/index.html" class="btn" target="_blank">🎯 打开股票分析工具</a>
+            <a href="http://localhost:8000/test_csv_parse.html" class="btn" target="_blank">🧪 测试CSV解析</a>
+        </div>
+        
+        <div style="margin-top: 30px; padding-top: 30px; border-top: 1px solid #e0e0e0;">
+            <h3 style="color: #667eea; margin-bottom: 15px;">📊 功能列表</h3>
+            <ul style="line-height: 2; color: #333;">
+                <li>✅ K线图 + 成交量图</li>
+                <li>✅ 均线MA（可调节周期）</li>
+                <li>✅ RSI指标（可调节参数）</li>
+                <li>✅ MACD指标（可调节参数）</li>
+                <li>✅ 布林带（Bollinger Bands）</li>
+                <li>✅ DMI/ADX</li>
+                <li>✅ KDJ</li>
+                <li>✅ VWAP</li>
+                <li>✅ 描述性统计</li>
+            </ul>
+        </div>
+        
+        <div style="margin-top: 30px; padding: 20px; background: #f8f9fa; border-radius: 8px;">
+            <h3 style="color: #333; margin-bottom: 10px;">🆘 如果还是失败</h3>
+            <ol style="line-height: 2; color: #666; padding-left: 20px;">
+                <li>检查终端是否显示 "Serving HTTP on port 8000"</li>
+                <li>检查浏览器地址栏是否以 <code>http://localhost:8000</code> 开头</li>
+                <li>按 <kbd>F12</kbd> 打开控制台，查看错误信息</li>
+                <li>运行 <code>python3 check_data.py</code> 检查CSV文件</li>
+            </ol>
+        </div>
+    </div>
+</body>
+</html>
