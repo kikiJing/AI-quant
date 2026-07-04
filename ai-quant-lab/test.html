@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Quant Lab - 数据加载测试</title>
+    <style>
+        body {
+            font-family: monospace;
+            background: #0d1117;
+            color: #c9d1d9;
+            padding: 20px;
+            line-height: 1.6;
+        }
+        .success { color: #3fb950; }
+        .error { color: #f85149; }
+        .info { color: #58a6ff; }
+        pre {
+            background: #161b22;
+            padding: 15px;
+            border-radius: 6px;
+            overflow-x: auto;
+            margin: 10px 0;
+        }
+        button {
+            padding: 10px 20px;
+            background: #238636;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+            margin: 5px;
+        }
+        button:hover {
+            background: #2ea043;
+        }
+    </style>
+</head>
+<body>
+    <h1>🔍 AI Quant Lab - 数据加载诊断</h1>
+    
+    <div id="status"></div>
+    
+    <h2>测试步骤</h2>
+    <button onclick="test1()">1. 测试访问 index.html</button>
+    <button onclick="test2()">2. 测试加载CSV文件</button>
+    <button onclick="test3()">3. 查看CSV内容</button>
+    
+    <h2>测试结果</h2>
+    <pre id="output">点击上面的按钮开始测试...</pre>
+    
+    <script>
+        const output = document.getElementById('output');
+        
+        function log(msg, type = 'info') {
+            const time = new Date().toLocaleTimeString();
+            const prefix = type === 'error' ? '❌' : type === 'success' ? '✅' : 'ℹ️';
+            output.textContent += `[${time}] ${prefix} ${msg}\n`;
+            console.log(msg);
+        }
+        
+        async function test1() {
+            output.textContent = '';
+            log('测试1: 检查当前页面路径...');
+            
+            const currentPath = window.location.href;
+            log(`当前URL: ${currentPath}`);
+            
+            if (currentPath.startsWith('file://')) {
+                log('错误: 您是直接双击打开HTML文件的！', 'error');
+                log('请使用本地服务器访问（参见下方说明）', 'error');
+                return;
+            }
+            
+            if (currentPath.startsWith('http://') || currentPath.startsWith('https://')) {
+                log('正确: 您通过HTTP服务器访问', 'success');
+            }
+        }
+        
+        async function test2() {
+            output.textContent = '';
+            log('测试2: 尝试加载CSV文件...');
+            
+            const csvFiles = [
+                'data/ningde_times_300750_daily.csv',
+                'data/ping_an_601318_daily.csv',
+                'data/moutai_600519_daily.csv'
+            ];
+            
+            for (const file of csvFiles) {
+                log(`尝试加载: ${file}`);
+                
+                try {
+                    const response = await fetch(file);
+                    
+                    if (!response.ok) {
+                        log(`  失败: HTTP ${response.status} ${response.statusText}`, 'error');
+                        continue;
+                    }
+                    
+                    const text = await response.text();
+                    const lines = text.trim().split('\n');
+                    
+                    log(`  成功: 文件大小 ${text.length} 字节, ${lines.length} 行`, 'success');
+                    log(`  表头: ${lines[0]}`);
+                    log(`  第一行: ${lines[1]}`);
+                    
+                } catch (error) {
+                    log(`  错误: ${error.message}`, 'error');
+                }
+            }
+        }
+        
+        async function test3() {
+            output.textContent = '';
+            log('测试3: 详细查看CSV内容...');
+            
+            try {
+                const response = await fetch('data/ningde_times_300750_daily.csv');
+                const text = await response.text();
+                
+                // 检查BOM
+                if (text.charCodeAt(0) === 0xFEFF) {
+                    log('检测到BOM标记，正在移除...', 'info');
+                    text = text.slice(1);
+                }
+                
+                const lines = text.trim().split('\n');
+                log(`总行数: ${lines.length}`);
+                log(`表头: ${lines[0]}`);
+                
+                // 解析前3行
+                for (let i = 1; i <= 3 && i < lines.length; i++) {
+                    const values = lines[i].split(',');
+                    log(`第${i}行: 日期=${values[1]}, 收盘=${values[5]}`);
+                }
+                
+                log('CSV格式正确！', 'success');
+                
+            } catch (error) {
+                log(`错误: ${error.message}`, 'error');
+            }
+        }
+        
+        // 页面加载时自动测试
+        window.addEventListener('load', () => {
+            log('页面加载完成，开始自动诊断...');
+            test1();
+        });
+    </script>
+    
+    <h2>📖 如何正确使用</h2>
+    <div style="background: #161b22; padding: 15px; border-radius: 6px;">
+        <h3>❌ 错误方式（会导致数据加载失败）</h3>
+        <p>直接双击打开 <code>index.html</code> 文件</p>
+        <p>→ 浏览器URL会以 <code>file://</code> 开头</p>
+        <p>→ 由于CORS安全限制，无法加载CSV文件</p>
+        
+        <h3>✅ 正确方式（推荐使用本地服务器）</h3>
+        <p>1. 打开终端</p>
+        <p>2. 进入项目目录:</p>
+        <pre>cd "/Users/kikijing/Desktop/AI quant/ai-quant-lab"</pre>
+        <p>3. 启动服务器:</p>
+        <pre>python3 -m http.server 8000</pre>
+        <p>4. 在浏览器中访问:</p>
+        <pre>http://localhost:8000/index.html</pre>
+        
+        <h3>🚀 更简单的方式（使用启动脚本）</h3>
+        <pre>cd "/Users/kikijing/Desktop/AI quant/ai-quant-lab"
+./start.sh</pre>
+        <p>脚本会自动启动服务器并打开浏览器！</p>
+    </div>
+</body>
+</html>
