@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CSV解析测试 - StockAnalyzer</title>
+    <style>
+        body {
+            font-family: monospace;
+            background: #0d1117;
+            color: #c9d1d9;
+            padding: 20px;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        h1 {
+            color: #58a6ff;
+        }
+        .test-section {
+            background: #161b22;
+            border: 1px solid #30363d;
+            border-radius: 8px;
+            padding: 20px;
+            margin: 20px 0;
+        }
+        button {
+            background: #238636;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+            margin: 5px;
+        }
+        button:hover {
+            background: #2ea043;
+        }
+        .log {
+            background: #0d1117;
+            border: 1px solid #30363d;
+            border-radius: 6px;
+            padding: 15px;
+            margin-top: 15px;
+            max-height: 400px;
+            overflow-y: auto;
+            font-size: 13px;
+            line-height: 1.6;
+        }
+        .log div {
+            margin: 5px 0;
+        }
+        .success { color: #3fb950; }
+        .error { color: #f85149; }
+        .info { color: #58a6ff; }
+        .warning { color: #d29922; }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 15px;
+            font-size: 12px;
+        }
+        th, td {
+            border: 1px solid #30363d;
+            padding: 8px;
+            text-align: left;
+        }
+        th {
+            background: #21262d;
+            color: #8b949e;
+        }
+        tr:hover {
+            background: #1c2128;
+        }
+    </style>
+</head>
+<body>
+    <h1>🧪 CSV解析测试</h1>
+    <p>这个页面测试CSV文件是否能正确解析。</p>
+    
+    <div class="test-section">
+        <h2>测试1: 加载并解析CSV</h2>
+        <button onclick="testLoadCSV()">开始测试</button>
+        <button onclick="clearLog()">清空日志</button>
+        <div id="log1" class="log"></div>
+    </div>
+    
+    <div class="test-section">
+        <h2>测试2: 预览解析后的数据</h2>
+        <div id="preview"></div>
+    </div>
+    
+    <script>
+        let log1 = document.getElementById('log1');
+        
+        function log(msg, type = 'info') {
+            const div = document.createElement('div');
+            div.className = type;
+            div.textContent = msg;
+            log1.appendChild(div);
+            log1.scrollTop = log1.scrollHeight;
+        }
+        
+        function clearLog() {
+            log1.innerHTML = '';
+        }
+        
+        async function testLoadCSV() {
+            log('开始测试CSV解析...', 'info');
+            
+            try {
+                // 测试加载第一个CSV文件
+                const csvPath = 'data/ningde_times_300750_daily.csv';
+                log(`加载文件: ${csvPath}`, 'info');
+                
+                const response = await fetch(csvPath);
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
+                
+                const csvText = await response.text();
+                log(`✅ CSV文件加载成功，数据长度: ${csvText.length} 字符`, 'success');
+                
+                // 移除BOM
+                const cleanCSV = csvText.replace(/^\uFEFF/, '');
+                log('✅ BOM标记已移除', 'success');
+                
+                // 解析CSV
+                const lines = cleanCSV.trim().split('\n');
+                log(`✅ CSV共 ${lines.length} 行`, 'success');
+                
+                // 解析表头
+                const headers = lines[0].split(',').map(h => h.trim());
+                log(`✅ CSV表头: ${headers.join(', ')}`, 'success');
+                
+                // 建立列名映射
+                const colIndex = {};
+                headers.forEach((header, idx) => {
+                    colIndex[header] = idx;
+                });
+                log(`✅ 列名映射: ${JSON.stringify(colIndex)}`, 'success');
+                
+                // 验证必需的列
+                const requiredCols = ['trade_date', 'open', 'high', 'low', 'close', 'vol'];
+                const missingCols = requiredCols.filter(col => colIndex[col] === undefined);
+                
+                if (missingCols.length > 0) {
+                    log(`❌ 缺少必需的列: ${missingCols.join(', ')}`, 'error');
+                    return;
+                }
+                
+                log('✅ 所有必需的列都存在', 'success');
+                
+                // 解析前3行数据
+                log('', 'info');
+                log('解析前3行数据:', 'info');
+                
+                const previewData = [];
+                for (let i = 1; i <= Math.min(3, lines.length - 1); i++) {
+                    const values = lines[i].split(',');
+                    
+                    const date = values[colIndex['trade_date']].trim();
+                    const open = parseFloat(values[colIndex['open']]);
+                    const high = parseFloat(values[colIndex['high']]);
+                    const low = parseFloat(values[colIndex['low']]);
+                    const close = parseFloat(values[colIndex['close']]);
+                    const volume = parseFloat(values[colIndex['vol']]);
+                    
+                    log(`第${i}行: date=${date}, open=${open}, high=${high}, low=${low}, close=${close}, volume=${volume}`, 'info');
+                    
+                    previewData.push({ date, open, high, low, close, volume });
+                }
+                
+                // 显示预览表格
+                showPreview(previewData);
+                
+                log('', 'info');
+                log('✅ CSV解析测试通过！', 'success');
+                
+            } catch (error) {
+                log(`❌ 测试失败: ${error.message}`, 'error');
+                console.error(error);
+            }
+        }
+        
+        function showPreview(data) {
+            const preview = document.getElementById('preview');
+            
+            let html = '<table><tr><th>日期</th><th>开盘</th><th>最高</th><th>最低</th><th>收盘</th><th>成交量</th></tr>';
+            
+            data.forEach(row => {
+                html += `<tr>
+                    <td>${row.date}</td>
+                    <td>${row.open}</td>
+                    <td>${row.high}</td>
+                    <td>${row.low}</td>
+                    <td>${row.close}</td>
+                    <td>${row.volume}</td>
+                </tr>`;
+            });
+            
+            html += '</table>';
+            
+            preview.innerHTML = html;
+        }
+    </script>
+</body>
+</html>

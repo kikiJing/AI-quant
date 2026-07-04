@@ -457,28 +457,61 @@
                     throw new Error('CSV文件数据不足');
                 }
                 
-                const headers = lines[0].split(',');
+                // 解析表头，建立列名到索引的映射
+                const headers = lines[0].split(',').map(h => h.trim());
                 console.log('CSV表头:', headers);
                 
-                stockData = lines.slice(1).map((line, idx) => {
+                // 建立列名映射
+                const colIndex = {};
+                headers.forEach((header, idx) => {
+                    colIndex[header] = idx;
+                });
+                
+                console.log('列名映射:', colIndex);
+                
+                // 验证必需的列是否存在
+                const requiredCols = ['trade_date', 'open', 'high', 'low', 'close', 'vol'];
+                const missingCols = requiredCols.filter(col => colIndex[col] === undefined);
+                if (missingCols.length > 0) {
+                    throw new Error(`CSV文件缺少必需的列: ${missingCols.join(', ')}`);
+                }
+                
+                stockData = [];
+                
+                for (let i = 1; i < lines.length; i++) {
+                    const line = lines[i].trim();
+                    if (!line) continue; // 跳过空行
+                    
                     const values = line.split(',');
                     
                     // 处理可能的引号
                     const cleanValue = (v) => v.replace(/^"|"$/g, '').trim();
                     
-                    return {
-                        date: cleanValue(values[1]), // trade_date
-                        open: parseFloat(cleanValue(values[2])),
-                        high: parseFloat(cleanValue(values[3])),
-                        low: parseFloat(cleanValue(values[4])),
-                        close: parseFloat(cleanValue(values[5])),
-                        volume: parseFloat(cleanValue(values[9]))
-                    };
-                }).filter(d => !isNaN(d.close)); // 过滤无效数据
+                    // 使用列名映射获取值，而不是硬编码索引
+                    const date = cleanValue(values[colIndex['trade_date']]);
+                    const open = parseFloat(cleanValue(values[colIndex['open']]));
+                    const high = parseFloat(cleanValue(values[colIndex['high']]));
+                    const low = parseFloat(cleanValue(values[colIndex['low']]));
+                    const close = parseFloat(cleanValue(values[colIndex['close']]));
+                    const volume = parseFloat(cleanValue(values[colIndex['vol']]));
+                    
+                    // 验证数据
+                    if (!date || isNaN(open) || isNaN(high) || isNaN(low) || isNaN(close) || isNaN(volume)) {
+                        console.warn(`第${i+1}行数据无效，跳过:`, values);
+                        continue;
+                    }
+                    
+                    stockData.push({
+                        date: date,
+                        open: open,
+                        high: high,
+                        low: low,
+                        close: close,
+                        volume: volume
+                    });
+                }
                 
                 console.log('解析后的数据条数:', stockData.length);
-                console.log('第一条数据:', stockData[0]);
-                console.log('最后一条数据:', stockData[stockData.length - 1]);
                 
                 if (stockData.length === 0) {
                     throw new Error('没有有效数据');
@@ -486,6 +519,9 @@
                 
                 // 按日期正序排列
                 stockData.sort((a, b) => a.date.localeCompare(b.date));
+                
+                console.log('第一条数据:', stockData[0]);
+                console.log('最后一条数据:', stockData[stockData.length - 1]);
                 
                 // 更新数据期间
                 const startDate = stockData[0].date;
@@ -601,91 +637,127 @@
         
         function createCandlestickChart() {
             const chartElement = document.getElementById('candlestickChart');
+            if (!chartElement) {
+                console.error('找不到candlestickChart元素');
+                return;
+            }
             chartElement.innerHTML = '';
             
-            const chart = LightweightCharts.createChart(chartElement, {
-                width: chartElement.clientWidth,
-                height: 400,
-                layout: {
-                    backgroundColor: '#161b22',
-                    textColor: '#8b949e',
-                },
-                grid: {
-                    vertLines: { color: '#21262d' },
-                    horzLines: { color: '#21262d' },
-                },
-                crosshair: {
-                    mode: LightweightCharts.CrosshairMode.Normal,
-                },
-                timeScale: {
-                    timeVisible: false,
-                    dateFormat: 'yyyy-MM-dd',
-                },
-            });
-            
-            // K线图
-            const candlestickSeries = chart.addCandlestickSeries({
-                upColor: '#f85149',
-                downColor: '#3fb950',
-                borderUpColor: '#f85149',
-                borderDownColor: '#3fb950',
-                wickUpColor: '#f85149',
-                wickDownColor: '#3fb950',
-            });
-            
-            const candlestickData = stockData.map(d => ({
-                time: d.date,
-                open: d.open,
-                high: d.high,
-                low: d.low,
-                close: d.close,
-            }));
-            
-            candlestickSeries.setData(candlestickData);
-            
-            // 成交量图
-            const volumeSeries = chart.addHistogramSeries({
-                priceFormat: { type: 'volume' },
-                priceScaleId: 'volume',
-            });
-            
-            chart.priceScale('volume').applyOptions({
-                scaleMargins: { top: 0.7, bottom: 0 },
-            });
-            
-            const volumeData = stockData.map(d => ({
-                time: d.date,
-                value: d.volume,
-                color: d.close >= d.open ? '#f85149' : '#3fb950',
-            }));
-            
-            volumeSeries.setData(volumeData);
-            
-            // 添加MA线
-            if (document.getElementById('showMA').checked) {
-                const periods = document.getElementById('maPeriods').value.split(',').map(p => parseInt(p.trim()));
-                const maData = calculateMA(stockData, periods);
-                
-                const colors = ['#f85149', '#58a6ff', '#3fb950', '#d2a8ff'];
-                periods.forEach((period, idx) => {
-                    const maSeries = chart.addLineSeries({
-                        color: colors[idx % colors.length],
-                        lineWidth: 1,
-                        priceLineVisible: false,
-                        lastValueVisible: false,
-                    });
-                    
-                    const maLineData = maData[period].map((val, idx) => ({
-                        time: stockData[idx].date,
-                        value: val,
-                    })).filter(d => d.value !== null);
-                    
-                    maSeries.setData(maLineData);
+            try {
+                const chart = LightweightCharts.createChart(chartElement, {
+                    width: chartElement.clientWidth,
+                    height: 400,
+                    layout: {
+                        backgroundColor: '#161b22',
+                        textColor: '#8b949e',
+                    },
+                    grid: {
+                        vertLines: { color: '#21262d' },
+                        horzLines: { color: '#21262d' },
+                    },
+                    crosshair: {
+                        mode: LightweightCharts.CrosshairMode.Normal,
+                    },
+                    timeScale: {
+                        timeVisible: false,
+                        dateFormat: 'yyyy-MM-dd',
+                    },
                 });
+                
+                // 验证数据
+                if (!stockData || stockData.length === 0) {
+                    console.error('stockData为空，无法创建图表');
+                    return;
+                }
+                
+                console.log('创建K线图，数据条数:', stockData.length);
+                
+                // K线图
+                const candlestickSeries = chart.addCandlestickSeries({
+                    upColor: '#f85149',
+                    downColor: '#3fb950',
+                    borderUpColor: '#f85149',
+                    borderDownColor: '#3fb950',
+                    wickUpColor: '#f85149',
+                    wickDownColor: '#3fb950',
+                });
+                
+                const candlestickData = stockData.map(d => {
+                    if (!d || !d.date) {
+                        console.error('数据项缺少date字段:', d);
+                        return null;
+                    }
+                    return {
+                        time: d.date,
+                        open: d.open,
+                        high: d.high,
+                        low: d.low,
+                        close: d.close,
+                    };
+                }).filter(d => d !== null);
+                
+                console.log('K线图数据条数:', candlestickData.length);
+                candlestickSeries.setData(candlestickData);
+                
+                // 成交量图
+                const volumeSeries = chart.addHistogramSeries({
+                    priceFormat: { type: 'volume' },
+                    priceScaleId: 'volume',
+                });
+                
+                chart.priceScale('volume').applyOptions({
+                    scaleMargins: { top: 0.7, bottom: 0 },
+                });
+                
+                const volumeData = stockData.map(d => ({
+                    time: d.date,
+                    value: d.volume,
+                    color: d.close >= d.open ? '#f85149' : '#3fb950',
+                }));
+                
+                volumeSeries.setData(volumeData);
+                
+                // 添加MA线
+                if (document.getElementById('showMA').checked) {
+                    const periodsStr = document.getElementById('maPeriods').value;
+                    const periods = periodsStr.split(',').map(p => parseInt(p.trim())).filter(p => !isNaN(p));
+                    console.log('计算MA，周期:', periods);
+                    
+                    const maData = calculateMA(stockData, periods);
+                    
+                    const colors = ['#f85149', '#58a6ff', '#3fb950', '#d2a8ff'];
+                    periods.forEach((period, idx) => {
+                        const maSeries = chart.addLineSeries({
+                            color: colors[idx % colors.length],
+                            lineWidth: 1,
+                            priceLineVisible: false,
+                            lastValueVisible: false,
+                        });
+                        
+                        const maLineData = [];
+                        for (let i = 0; i < stockData.length; i++) {
+                            if (maData[period][i] !== null && maData[period][i] !== undefined) {
+                                maLineData.push({
+                                    time: stockData[i].date,
+                                    value: maData[period][i]
+                                });
+                            }
+                        }
+                        
+                        console.log(`MA${period}数据条数:`, maLineData.length);
+                        maSeries.setData(maLineData);
+                    });
+                }
+                
+                chart.timeScale().fitContent();
+                charts.main = chart;
+                
+                console.log('K线图创建成功！');
+                
+            } catch (error) {
+                console.error('创建K线图失败:', error);
+                alert('创建K线图失败: ' + error.message);
             }
-            
-            chart.timeScale().fitContent();
-            charts.main = chart;
         }
         
         function createRSIChart() {
@@ -906,7 +978,11 @@
         // ============ 初始化 ============
         
         window.addEventListener('load', () => {
-            loadData();
+            console.log('页面加载完成，开始加载数据...');
+            // 延迟1秒加载，确保Lightweight Charts库已加载
+            setTimeout(() => {
+                loadData();
+            }, 1000);
         });
         
         // 响应窗口大小变化

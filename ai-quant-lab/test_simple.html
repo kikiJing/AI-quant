@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Quant Lab - 简化测试版</title>
+    
+    <!-- Lightweight Charts CDN -->
+    <script src="https://unpkg.com/lightweight-charts@4.1.3/dist/lightweight-charts.standalone.production.js"></script>
+    
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background: #0d1117;
+            color: #c9d1d9;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        
+        h1 {
+            color: #58a6ff;
+            margin-bottom: 20px;
+        }
+        
+        .chart-container {
+            background: #161b22;
+            border: 1px solid #30363d;
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+        
+        .btn {
+            padding: 10px 20px;
+            background: #238636;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+            margin: 5px;
+        }
+        
+        .btn:hover {
+            background: #2ea043;
+        }
+        
+        #log {
+            background: #161b22;
+            border: 1px solid #30363d;
+            border-radius: 6px;
+            padding: 15px;
+            margin-top: 20px;
+            max-height: 300px;
+            overflow-y: auto;
+            font-family: monospace;
+            font-size: 12px;
+        }
+        
+        .success { color: #3fb950; }
+        .error { color: #f85149; }
+        .info { color: #58a6ff; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🧪 AI Quant Lab - 简化测试版</h1>
+        
+        <p>这个页面用于测试数据加载和图表渲染。点击下面的按钮开始测试。</p>
+        
+        <button class="btn" onclick="testLoadData()">1. 测试加载CSV数据</button>
+        <button class="btn" onclick="testCreateChart()">2. 测试创建K线图</button>
+        <button class="btn" onclick="testCalculateMA()">3. 测试计算MA</button>
+        
+        <div class="chart-container">
+            <h3>K线图测试</h3>
+            <div id="chart" style="height: 400px;"></div>
+        </div>
+        
+        <div id="log"></div>
+    </div>
+    
+    <script>
+        let stockData = [];
+        let chart = null;
+        
+        function log(msg, type = 'info') {
+            const logDiv = document.getElementById('log');
+            const time = new Date().toLocaleTimeString();
+            const prefix = type === 'error' ? '❌' : type === 'success' ? '✅' : 'ℹ️';
+            logDiv.innerHTML += `<div class="${type}">[${time}] ${prefix} ${msg}</div>`;
+            logDiv.scrollTop = logDiv.scrollHeight;
+            console.log(msg);
+        }
+        
+        async function testLoadData() {
+            log('开始测试数据加载...');
+            
+            try {
+                const response = await fetch('data/ningde_times_300750_daily.csv');
+                log(`HTTP状态: ${response.status} ${response.statusText}`);
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}`);
+                }
+                
+                const text = await response.text();
+                log(`CSV文件大小: ${text.length} 字节`);
+                
+                // 移除BOM
+                const cleanText = text.replace(/^\uFEFF/, '');
+                const lines = cleanText.trim().split('\n');
+                log(`CSV行数: ${lines.length}`);
+                log(`表头: ${lines[0]}`);
+                
+                stockData = [];
+                for (let i = 1; i < lines.length; i++) {
+                    const values = lines[i].split(',');
+                    if (values.length < 10) continue;
+                    
+                    stockData.push({
+                        date: values[1].trim(),
+                        open: parseFloat(values[2]),
+                        high: parseFloat(values[3]),
+                        low: parseFloat(values[4]),
+                        close: parseFloat(values[5]),
+                        volume: parseFloat(values[9])
+                    });
+                }
+                
+                // 按日期排序
+                stockData.sort((a, b) => a.date.localeCompare(b.date));
+                
+                log(`成功加载 ${stockData.length} 条数据`, 'success');
+                log(`第一条: ${stockData[0].date}, 收盘: ${stockData[0].close}`);
+                log(`最后一条: ${stockData[stockData.length-1].date}, 收盘: ${stockData[stockData.length-1].close}`);
+                
+            } catch (error) {
+                log(`加载失败: ${error.message}`, 'error');
+            }
+        }
+        
+        function testCreateChart() {
+            log('开始测试图表创建...');
+            
+            if (stockData.length === 0) {
+                log('错误: 请先加载数据！', 'error');
+                return;
+            }
+            
+            try {
+                const chartElement = document.getElementById('chart');
+                chartElement.innerHTML = '';
+                
+                log(`创建图表，数据条数: ${stockData.length}`);
+                
+                chart = LightweightCharts.createChart(chartElement, {
+                    width: chartElement.clientWidth,
+                    height: 400,
+                    layout: {
+                        backgroundColor: '#161b22',
+                        textColor: '#8b949e',
+                    },
+                });
+                
+                const candlestickSeries = chart.addCandlestickSeries({
+                    upColor: '#f85149',
+                    downColor: '#3fb950',
+                    borderUpColor: '#f85149',
+                    borderDownColor: '#3fb950',
+                    wickUpColor: '#f85149',
+                    wickDownColor: '#3fb950',
+                });
+                
+                const chartData = stockData.map(d => {
+                    if (!d || !d.date) {
+                        log(`警告: 数据项缺少date字段`, 'error');
+                        return null;
+                    }
+                    return {
+                        time: d.date,
+                        open: d.open,
+                        high: d.high,
+                        low: d.low,
+                        close: d.close,
+                    };
+                }).filter(d => d !== null);
+                
+                log(`准备设置 ${chartData.length} 条K线数据`);
+                
+                candlestickSeries.setData(chartData);
+                chart.timeScale().fitContent();
+                
+                log('K线图创建成功！', 'success');
+                
+            } catch (error) {
+                log(`创建图表失败: ${error.message}`, 'error');
+                log(`错误堆栈: ${error.stack}`, 'error');
+            }
+        }
+        
+        function testCalculateMA() {
+            log('开始测试MA计算...');
+            
+            if (stockData.length === 0) {
+                log('错误: 请先加载数据！', 'error');
+                return;
+            }
+            
+            try {
+                const period = 5;
+                const maData = [];
+                
+                for (let i = 0; i < stockData.length; i++) {
+                    if (i < period - 1) {
+                        maData.push(null);
+                    } else {
+                        let sum = 0;
+                        for (let j = 0; j < period; j++) {
+                            sum += stockData[i - j].close;
+                        }
+                        maData.push(sum / period);
+                    }
+                }
+                
+                log(`MA${period}计算完成，有效数据: ${maData.filter(d => d !== null).length} 条`, 'success');
+                log(`最新MA${period}: ${maData[maData.length - 1].toFixed(2)}`);
+                
+            } catch (error) {
+                log(`计算MA失败: ${error.message}`, 'error');
+            }
+        }
+        
+        // 页面加载时自动测试
+        window.addEventListener('load', () => {
+            log('页面加载完成，请点击按钮开始测试');
+        });
+    </script>
+</body>
+</html>
