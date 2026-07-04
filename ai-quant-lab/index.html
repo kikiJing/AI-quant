@@ -343,12 +343,59 @@
             <!-- 布林带 -->
             <div class="indicator-group">
                 <div class="indicator-header">
-                    <input type="checkbox" class="indicator-checkbox" id="showBB">
-                    <label for="showBB" class="indicator-label">布林带</label>
+                    <input type="checkbox" class="indicator-checkbox" id="showBollinger">
+                    <label for="showBollinger" class="indicator-label">布林带 (Bollinger Bands)</label>
                 </div>
                 <div class="param-row">
-                    <span class="param-label">周期/倍数:</span>
-                    <input type="text" class="param-input" value="20,2" id="bbParams">
+                    <span class="param-label">周期:</span>
+                    <input type="text" class="param-input" value="20" id="bollingerPeriod" style="width: 50px;">
+                </div>
+                <div class="param-row">
+                    <span class="param-label">标准差倍数:</span>
+                    <input type="text" class="param-input" value="2" id="bollingerStdDev" style="width: 50px;">
+                </div>
+            </div>
+            
+            <!-- DMI/ADX -->
+            <div class="indicator-group">
+                <div class="indicator-header">
+                    <input type="checkbox" class="indicator-checkbox" id="showDMI">
+                    <label for="showDMI" class="indicator-label">DMI/ADX</label>
+                </div>
+                <div class="param-row">
+                    <span class="param-label">周期:</span>
+                    <input type="text" class="param-input" value="14" id="dmiPeriod" style="width: 50px;">
+                </div>
+            </div>
+            
+            <!-- KDJ -->
+            <div class="indicator-group">
+                <div class="indicator-header">
+                    <input type="checkbox" class="indicator-checkbox" id="showKDJ">
+                    <label for="showKDJ" class="indicator-label">KDJ</label>
+                </div>
+                <div class="param-row">
+                    <span class="param-label">RSV周期:</span>
+                    <input type="text" class="param-input" value="9" id="kdjRsvPeriod" style="width: 50px;">
+                </div>
+                <div class="param-row">
+                    <span class="param-label">K平滑:</span>
+                    <input type="text" class="param-input" value="3" id="kdjKPeriod" style="width: 50px;">
+                </div>
+                <div class="param-row">
+                    <span class="param-label">D平滑:</span>
+                    <input type="text" class="param-input" value="3" id="kdjDPeriod" style="width: 50px;">
+                </div>
+            </div>
+            
+            <!-- VWAP -->
+            <div class="indicator-group">
+                <div class="indicator-header">
+                    <input type="checkbox" class="indicator-checkbox" id="showVWAP">
+                    <label for="showVWAP" class="indicator-label">VWAP</label>
+                </div>
+                <div class="param-row">
+                    <span class="param-label" style="font-size: 11px; color: #8b949e;">成交量加权平均价</span>
                 </div>
             </div>
             
@@ -404,6 +451,26 @@
                     </div>
                     <div class="chart-wrapper">
                         <div id="macdChart" style="height: 200px;"></div>
+                    </div>
+                </div>
+                
+                <!-- DMI/ADX图 -->
+                <div class="chart-box" id="dmiChartBox" style="display: none;">
+                    <div class="chart-title">
+                        <span>📊 DMI/ADX 指标</span>
+                    </div>
+                    <div class="chart-wrapper">
+                        <div id="dmiChart" style="height: 200px;"></div>
+                    </div>
+                </div>
+                
+                <!-- KDJ图 -->
+                <div class="chart-box" id="kdjChartBox" style="display: none;">
+                    <div class="chart-title">
+                        <span>📈 KDJ 指标</span>
+                    </div>
+                    <div class="chart-wrapper">
+                        <div id="kdjChart" style="height: 200px;"></div>
                     </div>
                 </div>
                 
@@ -631,6 +698,209 @@
                 dea: dea,
                 macd: macd
             };
+        }
+        
+        // ============ 新增：布林带计算 ============
+        function calculateBollingerBands(data, period, stdDev) {
+            const middle = [];
+            const upper = [];
+            const lower = [];
+            
+            for (let i = 0; i < data.length; i++) {
+                if (i < period - 1) {
+                    middle.push(null);
+                    upper.push(null);
+                    lower.push(null);
+                } else {
+                    // 计算移动平均
+                    let sum = 0;
+                    for (let j = 0; j < period; j++) {
+                        sum += data[i - j].close;
+                    }
+                    const ma = sum / period;
+                    middle.push(ma);
+                    
+                    // 计算标准差
+                    let variance = 0;
+                    for (let j = 0; j < period; j++) {
+                        variance += Math.pow(data[i - j].close - ma, 2);
+                    }
+                    const std = Math.sqrt(variance / period);
+                    
+                    upper.push(ma + stdDev * std);
+                    lower.push(ma - stdDev * std);
+                }
+            }
+            
+            return { middle, upper, lower };
+        }
+        
+        // ============ 新增：DMI/ADX计算 ============
+        function calculateDMIADX(data, period) {
+            const tr = []; // True Range
+            const plusDM = []; // +DM
+            const minusDM = []; // -DM
+            
+            // 计算TR, +DM, -DM
+            for (let i = 0; i < data.length; i++) {
+                if (i === 0) {
+                    tr.push(data[i].high - data[i].low);
+                    plusDM.push(0);
+                    minusDM.push(0);
+                } else {
+                    const high = data[i].high;
+                    const low = data[i].low;
+                    const prevHigh = data[i - 1].high;
+                    const prevLow = data[i - 1].low;
+                    const prevClose = data[i - 1].close;
+                    
+                    // TR = max(High - Low, |High - PrevClose|, |Low - PrevClose|)
+                    const tr1 = high - low;
+                    const tr2 = Math.abs(high - prevClose);
+                    const tr3 = Math.abs(low - prevClose);
+                    tr.push(Math.max(tr1, tr2, tr3));
+                    
+                    // +DM = Current High - Previous High (if > 0 and > -DM)
+                    const dmPlus = high - prevHigh;
+                    const dmMinus = prevLow - low;
+                    
+                    plusDM.push(dmPlus > 0 && dmPlus > dmMinus ? dmPlus : 0);
+                    minusDM.push(dmMinus > 0 && dmMinus > dmPlus ? dmMinus : 0);
+                }
+            }
+            
+            // 计算平滑TR和DM（使用Wilder's smoothing）
+            const smoothedTR = wilderSmoothing(tr, period);
+            const smoothedPlusDM = wilderSmoothing(plusDM, period);
+            const smoothedMinusDM = wilderSmoothing(minusDM, period);
+            
+            // 计算+DI和-DI
+            const plusDI = [];
+            const minusDI = [];
+            const dx = [];
+            
+            for (let i = 0; i < data.length; i++) {
+                if (i < period - 1) {
+                    plusDI.push(null);
+                    minusDI.push(null);
+                    dx.push(null);
+                } else {
+                    const pdi = (smoothedPlusDM[i] / smoothedTR[i]) * 100;
+                    const mdi = (smoothedMinusDM[i] / smoothedTR[i]) * 100;
+                    plusDI.push(pdi);
+                    minusDI.push(mdi);
+                    
+                    const adx = (pdi + mdi) === 0 ? 0 : Math.abs((pdi - mdi) / (pdi + mdi)) * 100;
+                    dx.push(adx);
+                }
+            }
+            
+            // 计算ADX（DX的平滑平均）
+            const adx = wilderSmoothing(dx.filter(d => d !== null), period);
+            
+            // 对齐ADX数组
+            const adxResult = [];
+            let adxIdx = 0;
+            for (let i = 0; i < data.length; i++) {
+                if (i < 2 * period - 2) {
+                    adxResult.push(null);
+                } else {
+                    adxResult.push(adx[adxIdx]);
+                    adxIdx++;
+                }
+            }
+            
+            return {
+                plusDI: plusDI,
+                minusDI: minusDI,
+                adx: adxResult
+            };
+        }
+        
+        // Wilder's Smoothing
+        function wilderSmoothing(values, period) {
+            const result = [];
+            let sum = 0;
+            
+            for (let i = 0; i < values.length; i++) {
+                if (i < period) {
+                    sum += values[i];
+                    if (i === period - 1) {
+                        result[i] = sum;
+                    } else {
+                        result.push(null);
+                    }
+                } else {
+                    result[i] = result[i - 1] - (result[i - 1] / period) + values[i];
+                }
+            }
+            
+            return result;
+        }
+        
+        // ============ 新增：KDJ计算 ============
+        function calculateKDJ(data, rsvPeriod, kPeriod, dPeriod) {
+            const k = [];
+            const d = [];
+            const j = [];
+            
+            for (let i = 0; i < data.length; i++) {
+                if (i < rsvPeriod - 1) {
+                    k.push(null);
+                    d.push(null);
+                    j.push(null);
+                    continue;
+                }
+                
+                // 计算RSV
+                let lowest = data[i].low;
+                let highest = data[i].high;
+                
+                for (let j = 0; j < rsvPeriod; j++) {
+                    lowest = Math.min(lowest, data[i - j].low);
+                    highest = Math.max(highest, data[i - j].high);
+                }
+                
+                const rsv = highest === lowest ? 50 : ((data[i].close - lowest) / (highest - lowest)) * 100;
+                
+                // 计算K值
+                if (i === rsvPeriod - 1) {
+                    k[i] = (2 / 3) * 50 + (1 / 3) * rsv; // 初始K值=50
+                } else {
+                    k[i] = (kPeriod - 1) / kPeriod * k[i - 1] + (1 / kPeriod) * rsv;
+                }
+                
+                // 计算D值
+                if (i === rsvPeriod - 1) {
+                    d[i] = (2 / 3) * 50 + (1 / 3) * k[i]; // 初始D值=50
+                } else {
+                    d[i] = (dPeriod - 1) / dPeriod * d[i - 1] + (1 / dPeriod) * k[i];
+                }
+                
+                // 计算J值
+                j[i] = 3 * k[i] - 2 * d[i];
+            }
+            
+            return { k, d, j };
+        }
+        
+        // ============ 新增：VWAP计算 ============
+        function calculateVWAP(data) {
+            const vwap = [];
+            let cumulativeVolumePrice = 0;
+            let cumulativeVolume = 0;
+            
+            for (let i = 0; i < data.length; i++) {
+                // VWAP = ∑(典型价格 × 成交量) / ∑成交量
+                // 典型价格 = (High + Low + Close) / 3
+                const typicalPrice = (data[i].high + data[i].low + data[i].close) / 3;
+                cumulativeVolumePrice += typicalPrice * data[i].volume;
+                cumulativeVolume += data[i].volume;
+                
+                vwap.push(cumulativeVolumePrice / cumulativeVolume);
+            }
+            
+            return vwap;
         }
         
         // ============ 图表渲染 ============
@@ -888,6 +1158,315 @@
             charts.macd = chart;
         }
         
+        // ============ 新增：创建布林带图表 ============
+        function createBollingerBands() {
+            if (!document.getElementById('showBollinger').checked) {
+                // 如果不需要显示，移除布林带线
+                return;
+            }
+            
+            try {
+                const period = parseInt(document.getElementById('bollingerPeriod').value);
+                const stdDev = parseFloat(document.getElementById('bollingerStdDev').value);
+                
+                console.log('计算布林带，周期:', period, '标准差:', stdDev);
+                
+                const bb = calculateBollingerBands(stockData, period, stdDev);
+                
+                // 在K线图上添加布林带线
+                const chart = charts.main;
+                if (!chart) {
+                    console.error('主图表不存在');
+                    return;
+                }
+                
+                // 中轨（MA）
+                const middleSeries = chart.addLineSeries({
+                    color: '#58a6ff',
+                    lineWidth: 1,
+                    priceLineVisible: false,
+                    lastValueVisible: false,
+                });
+                
+                const middleData = bb.middle.map((val, idx) => ({
+                    time: stockData[idx].date,
+                    value: val,
+                })).filter(d => d.value !== null);
+                
+                middleSeries.setData(middleData);
+                
+                // 上轨
+                const upperSeries = chart.addLineSeries({
+                    color: '#f85149',
+                    lineWidth: 1,
+                    lineStyle: 2,
+                    priceLineVisible: false,
+                    lastValueVisible: false,
+                });
+                
+                const upperData = bb.upper.map((val, idx) => ({
+                    time: stockData[idx].date,
+                    value: val,
+                })).filter(d => d.value !== null);
+                
+                upperSeries.setData(upperData);
+                
+                // 下轨
+                const lowerSeries = chart.addLineSeries({
+                    color: '#3fb950',
+                    lineWidth: 1,
+                    lineStyle: 2,
+                    priceLineVisible: false,
+                    lastValueVisible: false,
+                });
+                
+                const lowerData = bb.lower.map((val, idx) => ({
+                    time: stockData[idx].date,
+                    value: val,
+                })).filter(d => d.value !== null);
+                
+                lowerSeries.setData(lowerData);
+                
+                console.log('布林带创建成功！');
+                
+            } catch (error) {
+                console.error('创建布林带失败:', error);
+            }
+        }
+        
+        // ============ 新增：创建DMI/ADX图表 ============
+        function createDMIADXChart() {
+            if (!document.getElementById('showDMI').checked) {
+                document.getElementById('dmiChartBox').style.display = 'none';
+                return;
+            }
+            
+            document.getElementById('dmiChartBox').style.display = 'block';
+            const chartElement = document.getElementById('dmiChart');
+            if (!chartElement) {
+                console.error('找不到dmiChart元素');
+                return;
+            }
+            chartElement.innerHTML = '';
+            
+            const chart = LightweightCharts.createChart(chartElement, {
+                width: chartElement.clientWidth,
+                height: 200,
+                layout: {
+                    backgroundColor: '#161b22',
+                    textColor: '#8b949e',
+                },
+                grid: {
+                    vertLines: { color: '#21262d' },
+                    horzLines: { color: '#21262d' },
+                },
+                timeScale: {
+                    timeVisible: false,
+                    dateFormat: 'yyyy-MM-dd',
+                },
+            });
+            
+            const period = parseInt(document.getElementById('dmiPeriod').value);
+            const dmiResult = calculateDMIADX(stockData, period);
+            
+            // +DI线
+            const plusDISeries = chart.addLineSeries({
+                color: '#58a6ff',
+                lineWidth: 1.5,
+                priceLineVisible: false,
+            });
+            
+            const plusDIData = dmiResult.plusDI.map((val, idx) => ({
+                time: stockData[idx].date,
+                value: val,
+            })).filter(d => d.value !== null);
+            
+            plusDISeries.setData(plusDIData);
+            
+            // -DI线
+            const minusDISeries = chart.addLineSeries({
+                color: '#f85149',
+                lineWidth: 1.5,
+                priceLineVisible: false,
+            });
+            
+            const minusDIData = dmiResult.minusDI.map((val, idx) => ({
+                time: stockData[idx].date,
+                value: val,
+            })).filter(d => d.value !== null);
+            
+            minusDISeries.setData(minusDIData);
+            
+            // ADX线
+            const adxSeries = chart.addLineSeries({
+                color: '#d2a8ff',
+                lineWidth: 2,
+                priceLineVisible: false,
+            });
+            
+            const adxData = dmiResult.adx.map((val, idx) => ({
+                time: stockData[idx].date,
+                value: val,
+            })).filter(d => d.value !== null);
+            
+            adxSeries.setData(adxData);
+            
+            // 添加ADX=25参考线
+            const refLine = chart.addLineSeries({
+                color: '#8b949e',
+                lineWidth: 1,
+                lineStyle: 2,
+                priceLineVisible: false,
+                lastValueVisible: false,
+            });
+            refLine.setData(adxData.map(d => ({ ...d, value: 25 })));
+            
+            chart.timeScale().fitContent();
+            charts.dmi = chart;
+        }
+        
+        // ============ 新增：创建KDJ图表 ============
+        function createKDJChart() {
+            if (!document.getElementById('showKDJ').checked) {
+                document.getElementById('kdjChartBox').style.display = 'none';
+                return;
+            }
+            
+            document.getElementById('kdjChartBox').style.display = 'block';
+            const chartElement = document.getElementById('kdjChart');
+            if (!chartElement) {
+                console.error('找不到kdjChart元素');
+                return;
+            }
+            chartElement.innerHTML = '';
+            
+            const chart = LightweightCharts.createChart(chartElement, {
+                width: chartElement.clientWidth,
+                height: 200,
+                layout: {
+                    backgroundColor: '#161b22',
+                    textColor: '#8b949e',
+                },
+                grid: {
+                    vertLines: { color: '#21262d' },
+                    horzLines: { color: '#21262d' },
+                },
+                timeScale: {
+                    timeVisible: false,
+                    dateFormat: 'yyyy-MM-dd',
+                },
+            });
+            
+            const rsvPeriod = parseInt(document.getElementById('kdjRsvPeriod').value);
+            const kPeriod = parseInt(document.getElementById('kdjKPeriod').value);
+            const dPeriod = parseInt(document.getElementById('kdjDPeriod').value);
+            
+            const kdjResult = calculateKDJ(stockData, rsvPeriod, kPeriod, dPeriod);
+            
+            // K线
+            const kSeries = chart.addLineSeries({
+                color: '#58a6ff',
+                lineWidth: 1.5,
+                priceLineVisible: false,
+            });
+            
+            const kData = kdjResult.k.map((val, idx) => ({
+                time: stockData[idx].date,
+                value: val,
+            })).filter(d => d.value !== null);
+            
+            kSeries.setData(kData);
+            
+            // D线
+            const dSeries = chart.addLineSeries({
+                color: '#f85149',
+                lineWidth: 1.5,
+                priceLineVisible: false,
+            });
+            
+            const dData = kdjResult.d.map((val, idx) => ({
+                time: stockData[idx].date,
+                value: val,
+            })).filter(d => d.value !== null);
+            
+            dSeries.setData(dData);
+            
+            // J线
+            const jSeries = chart.addLineSeries({
+                color: '#3fb950',
+                lineWidth: 1.5,
+                priceLineVisible: false,
+            });
+            
+            const jData = kdjResult.j.map((val, idx) => ({
+                time: stockData[idx].date,
+                value: val,
+            })).filter(d => d.value !== null);
+            
+            jSeries.setData(jData);
+            
+            // 添加超买超卖线
+            const overboughtLine = chart.addLineSeries({
+                color: '#8b949e',
+                lineWidth: 1,
+                lineStyle: 2,
+                priceLineVisible: false,
+                lastValueVisible: false,
+            });
+            overboughtLine.setData(kData.map(d => ({ ...d, value: 80 })));
+            
+            const oversoldLine = chart.addLineSeries({
+                color: '#8b949e',
+                lineWidth: 1,
+                lineStyle: 2,
+                priceLineVisible: false,
+                lastValueVisible: false,
+            });
+            oversoldLine.setData(kData.map(d => ({ ...d, value: 20 })));
+            
+            chart.timeScale().fitContent();
+            charts.kdj = chart;
+        }
+        
+        // ============ 新增：创建VWAP ============
+        function createVWAP() {
+            if (!document.getElementById('showVWAP').checked) {
+                return;
+            }
+            
+            try {
+                console.log('计算VWAP...');
+                
+                const vwap = calculateVWAP(stockData);
+                
+                // 在K线图上添加VWAP线
+                const chart = charts.main;
+                if (!chart) {
+                    console.error('主图表不存在');
+                    return;
+                }
+                
+                const vwapSeries = chart.addLineSeries({
+                    color: '#d2a8ff',
+                    lineWidth: 2,
+                    priceLineVisible: false,
+                    lastValueVisible: true,
+                });
+                
+                const vwapData = vwap.map((val, idx) => ({
+                    time: stockData[idx].date,
+                    value: val,
+                }));
+                
+                vwapSeries.setData(vwapData);
+                
+                console.log('VWAP创建成功！');
+                
+            } catch (error) {
+                console.error('创建VWAP失败:', error);
+            }
+        }
+        
         // ============ 更新统计信息 ============
         
         function updateStats() {
@@ -957,6 +1536,10 @@
             createCandlestickChart();
             createRSIChart();
             createMACDChart();
+            createBollingerBands();  // 新增：布林带
+            createVWAP();            // 新增：VWAP
+            createDMIADXChart();     // 新增：DMI/ADX
+            createKDJChart();        // 新增：KDJ
             
             // 更新统计
             updateStats();
@@ -968,7 +1551,12 @@
             document.getElementById('maPeriods').value = '5,10,20,60';
             document.getElementById('rsiPeriod').value = '14';
             document.getElementById('macdParams').value = '12,26,9';
-            document.getElementById('bbParams').value = '20,2';
+            document.getElementById('bollingerPeriod').value = '20';
+            document.getElementById('bollingerStdDev').value = '2';
+            document.getElementById('dmiPeriod').value = '14';
+            document.getElementById('kdjRsvPeriod').value = '9';
+            document.getElementById('kdjKPeriod').value = '3';
+            document.getElementById('kdjDPeriod').value = '3';
             
             if (stockData.length > 0) {
                 updateCharts();
