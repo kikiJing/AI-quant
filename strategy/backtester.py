@@ -16,14 +16,16 @@ def run_backtest(df: pd.DataFrame, params: dict) -> dict:
         df: DataFrame，必须包含 'signal', 'close', 'trade_date' 列
         params: 策略参数字典，包含：
             - initial_capital: 初始资金
-            - commission: 手续费率（如0.001表示0.1%）
-            - slippage: 滑点（如0.001表示0.1%）
+            - commission: 手续费率（如0.0003表示万三）
+            - slippage: 滑点（如0.0001表示万一）
             - position_sizing: 仓位管理方式
-                'full' - 全仓买卖
+                'full' - 全仓买卖（受 buy_ratio/sell_ratio 约束）
                 'fixed_shares' - 固定数量
-                'fixed_ratio' - 固定比例
+                'fixed_ratio' - 固定比例（受 buy_ratio/sell_ratio 约束）
             - fixed_shares: 固定数量（当position_sizing='fixed_shares'时）
             - fixed_ratio: 固定比例（当position_sizing='fixed_ratio'时）
+            - buy_ratio: 买入时仓位比例（默认1.0 = 全仓买入）
+            - sell_ratio: 卖出时仓位比例（默认1.0 = 全仓卖出）
     
     返回：
         字典，包含：
@@ -35,11 +37,13 @@ def run_backtest(df: pd.DataFrame, params: dict) -> dict:
             - 'transaction_costs': 交易成本统计字典
     """
     initial_capital = params['initial_capital']
-    commission = params.get('commission', 0.001)
-    slippage = params.get('slippage', 0.0)  # 滑点，默认0
+    commission = params.get('commission', 0.0003)
+    slippage = params.get('slippage', 0.0001)
     position_sizing = params.get('position_sizing', 'full')
     fixed_shares = params.get('fixed_shares', 100)
-    fixed_ratio = params.get('fixed_ratio', 0.2)
+    fixed_ratio = params.get('fixed_ratio', 0.5)
+    buy_ratio = params.get('buy_ratio', 1.0)    # 买入仓位比例
+    sell_ratio = params.get('sell_ratio', 1.0)  # 卖出仓位比例
     
     cash = initial_capital
     position = 0  # 持仓数量（股）
@@ -58,16 +62,17 @@ def run_backtest(df: pd.DataFrame, params: dict) -> dict:
             # 计算实际买入价格（含滑点）
             actual_buy_price = price * (1 + slippage)
             
-            # 计算买入数量
+            # 计算买入数量（受 buy_ratio 约束）
             if position_sizing == 'full':
-                # 全仓买入
-                shares_to_buy = int(cash * (1 - commission) / actual_buy_price)
+                # 全仓买入（按 buy_ratio 比例）
+                affordable_shares = int(cash * (1 - commission) / actual_buy_price)
+                shares_to_buy = int(affordable_shares * buy_ratio)
             elif position_sizing == 'fixed_shares':
                 # 固定数量
                 shares_to_buy = min(fixed_shares, int(cash / actual_buy_price))
             elif position_sizing == 'fixed_ratio':
-                # 固定比例
-                amount_to_invest = cash * fixed_ratio
+                # 固定比例（按 buy_ratio 比例）
+                amount_to_invest = cash * fixed_ratio * buy_ratio
                 shares_to_buy = int(amount_to_invest * (1 - commission) / actual_buy_price)
             else:
                 shares_to_buy = 0
@@ -103,16 +108,16 @@ def run_backtest(df: pd.DataFrame, params: dict) -> dict:
             # 计算实际卖出价格（含滑点）
             actual_sell_price = price * (1 - slippage)
             
-            # 计算卖出数量
+            # 计算卖出数量（受 sell_ratio 约束）
             if position_sizing == 'full':
-                # 全仓卖出
-                shares_to_sell = position
+                # 全仓卖出（按 sell_ratio 比例）
+                shares_to_sell = int(position * sell_ratio)
             elif position_sizing == 'fixed_shares':
                 # 固定数量
                 shares_to_sell = min(fixed_shares, position)
             elif position_sizing == 'fixed_ratio':
-                # 固定比例
-                shares_to_sell = int(position * fixed_ratio)
+                # 固定比例（按 sell_ratio 比例）
+                shares_to_sell = int(position * fixed_ratio * sell_ratio)
             else:
                 shares_to_sell = 0
             

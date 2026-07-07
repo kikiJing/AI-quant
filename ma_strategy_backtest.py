@@ -71,11 +71,13 @@ STRATEGY_PARAMS = {
     'atr_percentile': 20,       # ATR历史百分位阈值（P20）
     'atr_lookback': 100,       # ATR历史lookback天数
     'initial_capital': 100000,   # 初始资金（元）
-    'commission': 0.001,        # 手续费率（0.1% = 0.001）
-    'slippage': 0.001,         # 滑点（0.1% = 0.001）
+    'commission': 0.0003,       # 手续费率（万三 = 0.03% = 0.0003）
+    'slippage': 0.0001,        # 滑点（万一 = 0.01% = 0.0001）
     'position_sizing': 'full',   # 仓位管理方式：'full' | 'fixed_shares' | 'fixed_ratio'
-    'fixed_shares': 100,       # 固定数量
-    'fixed_ratio': 0.2,         # 固定比例
+    'fixed_shares': 100,        # 固定数量（position_sizing='fixed_shares'时生效）
+    'fixed_ratio': 0.5,          # 固定比例（position_sizing='fixed_ratio'时生效，50%仓位）
+    'buy_ratio': 1.0,           # 买入时仓位比例（1.0 = 全仓买入）
+    'sell_ratio': 1.0,          # 卖出时仓位比例（1.0 = 全仓卖出）
     'start_date': '2024-07-03',
     'end_date': '2026-07-03',
 }

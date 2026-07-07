@@ -6,15 +6,13 @@
     <title>均线策略回测系统 - StockAnalyzer Pro</title>
     <script src="https://cdn.plot.ly/plotly-2.27.0.min.js"></script>
     <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; }
+        * { margin:0; padding:0; box-sizing: border-box; }
         body {
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC",
                          "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
             background: #0d1117; color: #e0e0e0; min-height: 100vh;
             display: flex; flex-direction: column;
         }
-        
-        /* 头部 */
         .header {
             background: linear-gradient(135deg, #161b22 0%, #0d1117 100%);
             padding: 16px 24px;
@@ -29,20 +27,12 @@
             padding: 4px 12px; border-radius: 12px; font-size: 12px; font-weight: 500;
             background: #238636; color: #fff;
         }
-        
-        /* 主布局 */
-        .main-layout {
-            display: flex; flex: 1; overflow: hidden;
-        }
-        
-        /* 左侧边栏 */
+        .main-layout { display: flex; flex: 1; overflow: hidden; }
         .sidebar {
-            width: 300px; background: #161b22; border-right: 1px solid #30363d;
+            width: 320px; background: #161b22; border-right: 1px solid #30363d;
             overflow-y: auto; padding: 16px; flex-shrink: 0;
         }
-        .sidebar-section {
-            margin-bottom: 20px;
-        }
+        .sidebar-section { margin-bottom: 20px; }
         .sidebar-title {
             font-size: 13px; color: #f0f6fc; font-weight: 600;
             margin-bottom: 12px; padding-bottom: 8px;
@@ -53,11 +43,7 @@
             content: ''; display: inline-block; width: 3px; height: 14px;
             background: #388bfd; border-radius: 2px;
         }
-        
-        /* 表单控件 */
-        .form-group {
-            margin-bottom: 12px;
-        }
+        .form-group { margin-bottom: 12px; }
         .form-label {
             display: block; font-size: 12px; color: #8b949e;
             margin-bottom: 4px;
@@ -70,11 +56,8 @@
         .form-input:focus, .form-select:focus {
             outline: none; border-color: #388bfd;
         }
-        .form-row {
-            display: flex; gap: 8px;
-        }
+        .form-row { display: flex; gap: 8px; }
         .form-row .form-group { flex: 1; }
-        
         .checkbox-group {
             display: flex; align-items: center; gap: 8px;
             margin-bottom: 8px;
@@ -85,34 +68,21 @@
         .checkbox-group label {
             font-size: 13px; color: #c9d1d9; cursor: pointer;
         }
-        
-        /* 按钮 */
         .btn {
             padding: 10px 16px; border: none; border-radius: 6px;
             font-size: 13px; font-weight: 500; cursor: pointer;
             transition: all 0.2s;
         }
-        .btn-primary {
-            background: #238636; color: #fff; width: 100%;
-        }
+        .btn-primary { background: #238636; color: #fff; width: 100%; }
         .btn-primary:hover { background: #2ea043; }
         .btn-secondary {
             background: #21262d; color: #c9d1d9; width: 100%;
             border: 1px solid #30363d;
         }
         .btn-secondary:hover { background: #30363d; }
-        
-        .btn-group {
-            display: flex; gap: 8px; margin-top: 16px;
-        }
+        .btn-group { display: flex; gap: 8px; margin-top: 16px; }
         .btn-group .btn { flex: 1; }
-        
-        /* 右侧内容区 */
-        .content {
-            flex: 1; overflow-y: auto; padding: 16px;
-        }
-        
-        /* 图表容器 */
+        .content { flex: 1; overflow-y: auto; padding: 16px; }
         .chart-box {
             background: #161b22; border: 1px solid #30363d;
             border-radius: 8px; padding: 16px; margin-bottom: 16px;
@@ -121,8 +91,6 @@
             font-size: 14px; color: #f0f6fc; font-weight: 500;
             margin-bottom: 12px; display: flex; align-items: center; gap: 8px;
         }
-        
-        /* 指标面板 */
         .metrics-grid {
             display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
             gap: 12px; margin-bottom: 16px;
@@ -131,45 +99,27 @@
             background: #161b22; border: 1px solid #30363d;
             border-radius: 8px; padding: 16px;
         }
-        .metric-label {
-            font-size: 12px; color: #8b949e; margin-bottom: 4px;
-        }
-        .metric-value {
-            font-size: 24px; font-weight: 600; color: #f0f6fc;
-        }
+        .metric-label { font-size: 12px; color: #8b949e; margin-bottom: 4px; }
+        .metric-value { font-size: 24px; font-weight: 600; color: #f0f6fc; }
         .metric-value.positive { color: #ef5350; }
         .metric-value.negative { color: #26a69a; }
-        .metric-sub {
-            font-size: 12px; color: #6e7681; margin-top: 4px;
-        }
-        
-        /* 表格 */
+        .metric-sub { font-size: 12px; color: #6e7681; margin-top: 4px; }
         .table-container {
             background: #161b22; border: 1px solid #30363d;
             border-radius: 8px; padding: 16px; margin-bottom: 16px;
             overflow-x: auto;
         }
-        .table-title {
-            font-size: 14px; color: #f0f6fc; font-weight: 500;
-            margin-bottom: 12px;
-        }
-        table {
-            width: 100%; border-collapse: collapse; font-size: 13px;
-        }
+        .table-title { font-size: 14px; color: #f0f6fc; font-weight: 500; margin-bottom: 12px; }
+        table { width: 100%; border-collapse: collapse; font-size: 13px; }
         th {
             background: #21262d; color: #8b949e; font-weight: 500;
             padding: 8px 12px; text-align: left;
             border-bottom: 1px solid #30363d;
         }
-        td {
-            padding: 8px 12px; border-bottom: 1px solid #21262d;
-            color: #c9d1d9;
-        }
+        td { padding: 8px 12px; border-bottom: 1px solid #21262d; color: #c9d1d9; }
         tr:hover td { background: #1c2128; }
         .buy-signal { color: #ef5350; font-weight: 500; }
         .sell-signal { color: #26a69a; font-weight: 500; }
-        
-        /* 加载动画 */
         .loading {
             display: flex; align-items: center; justify-content: center;
             padding: 40px; color: #8b949e; font-size: 14px;
@@ -180,8 +130,7 @@
             animation: spin 0.8s linear infinite; margin-right: 8px;
         }
         @keyframes spin { to { transform: rotate(360deg); } }
-        
-        /* 响应式 */
+        .param-hint { font-size: 11px; color: #6e7681; margin-top: 2px; }
         @media (max-width: 1024px) {
             .main-layout { flex-direction: column; }
             .sidebar { width: 100%; border-right: none; border-bottom: 1px solid #30363d; }
@@ -193,7 +142,7 @@
     <div class="header">
         <h1>📊 <span>均线策略回测系统</span></h1>
         <span class="header-info">双均线策略 + 趋势过滤器 + ATR过滤器</span>
-        <span class="header-badge">v1.0</span>
+        <span class="header-badge">v1.1</span>
     </div>
     
     <!-- 主布局 -->
@@ -202,10 +151,10 @@
         <div class="sidebar">
             <!-- 股票选择 -->
             <div class="sidebar-section">
-                <div class="sidebar-title">📈 股票选择</div>
+                <div class="sidebar-title">📈 股票选择 & 回测区间</div>
                 <div class="form-group">
                     <label class="form-label">选择股票</label>
-                    <select class="form-select" id="stockSelect" onchange="onStockChange()">
+                    <select class="form-select" id="stockSelect">
                         <option value="300750.SZ">宁德时代 (300750.SZ) - 科技/新能源</option>
                         <option value="601318.SH">中国平安 (601318.SH) - 金融</option>
                         <option value="600519.SH">贵州茅台 (600519.SH) - 消费</option>
@@ -223,6 +172,7 @@
                         <input type="date" class="form-input" id="endDate" value="2026-07-03">
                     </div>
                 </div>
+                <div class="param-hint">修改日期后点击"运行回测"生效</div>
             </div>
             
             <!-- 均线参数 -->
@@ -232,10 +182,12 @@
                     <div class="form-group">
                         <label class="form-label">短均线周期</label>
                         <input type="number" class="form-input" id="shortWindow" value="5" min="1" max="50">
+                        <div class="param-hint">建议：5~20日</div>
                     </div>
                     <div class="form-group">
                         <label class="form-label">长均线周期</label>
                         <input type="number" class="form-input" id="longWindow" value="15" min="1" max="100">
+                        <div class="param-hint">建议：15~60日</div>
                     </div>
                 </div>
                 <div class="form-group">
@@ -252,11 +204,12 @@
                 <div class="sidebar-title">🔍 信号过滤器</div>
                 <div class="checkbox-group">
                     <input type="checkbox" id="trendFilter" checked>
-                    <label for="trendFilter">趋势过滤器 (120日均线)</label>
+                    <label for="trendFilter">趋势过滤器 (长期均线)</label>
                 </div>
                 <div class="form-group" style="margin-left: 24px;">
                     <label class="form-label">趋势均线周期</label>
                     <input type="number" class="form-input" id="trendWindow" value="120" min="50" max="250">
+                    <div class="param-hint">价格 & 短均线均在此均线之上才做多</div>
                 </div>
                 
                 <div class="checkbox-group">
@@ -269,8 +222,9 @@
                         <input type="number" class="form-input" id="atrWindow" value="14" min="5" max="30">
                     </div>
                     <div class="form-group">
-                        <label class="form-label">ATR百分位</label>
+                        <label class="form-label">ATR百分位阈值</label>
                         <input type="number" class="form-input" id="atrPercentile" value="20" min="5" max="50">
+                        <div class="param-hint">低于此百分位时规避信号</div>
                     </div>
                 </div>
             </div>
@@ -285,20 +239,46 @@
                 <div class="form-row">
                     <div class="form-group">
                         <label class="form-label">手续费率 (%)</label>
-                        <input type="number" class="form-input" id="commission" value="0.1" min="0" max="1" step="0.05">
+                        <input type="number" class="form-input" id="commission" value="0.03" min="0" max="1" step="0.01">
+                        <div class="param-hint">万三 = 0.03%</div>
                     </div>
                     <div class="form-group">
                         <label class="form-label">滑点 (%)</label>
-                        <input type="number" class="form-input" id="slippage" value="0.1" min="0" max="1" step="0.05">
+                        <input type="number" class="form-input" id="slippage" value="0.01" min="0" max="1" step="0.01">
+                        <div class="param-hint">万一 = 0.01%</div>
                     </div>
                 </div>
                 <div class="form-group">
                     <label class="form-label">仓位管理</label>
-                    <select class="form-select" id="positionSizing">
-                        <option value="full">全仓买卖</option>
+                    <select class="form-select" id="positionSizing" onchange="onPositionSizingChange()">
+                        <option value="full">全仓买卖（可设比例）</option>
                         <option value="fixed_shares">固定数量</option>
                         <option value="fixed_ratio">固定比例</option>
                     </select>
+                </div>
+                <!-- 全仓模式下的买卖比例 -->
+                <div class="form-row" id="ratioGroup">
+                    <div class="form-group">
+                        <label class="form-label">买入仓位比例 (%)</label>
+                        <input type="number" class="form-input" id="buyRatio" value="100" min="1" max="100" step="10">
+                        <div class="param-hint">100% = 全仓买入</div>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">卖出仓位比例 (%)</label>
+                        <input type="number" class="form-input" id="sellRatio" value="100" min="1" max="100" step="10">
+                        <div class="param-hint">100% = 全仓卖出</div>
+                    </div>
+                </div>
+                <!-- 固定数量 -->
+                <div class="form-group" id="fixedSharesGroup" style="display:none;">
+                    <label class="form-label">每次买卖数量 (股)</label>
+                    <input type="number" class="form-input" id="fixedShares" value="100" min="1" step="100">
+                </div>
+                <!-- 固定比例 -->
+                <div class="form-group" id="fixedRatioGroup" style="display:none;">
+                    <label class="form-label">每次买卖仓位比例 (%)</label>
+                    <input type="number" class="form-input" id="fixedRatio" value="50" min="1" max="100" step="10">
+                    <div class="param-hint">每次用当前资金的 X% 买入 / 卖出 X% 持仓</div>
                 </div>
             </div>
             
@@ -310,13 +290,18 @@
                 <button class="btn btn-secondary" onclick="resetParams()">重置参数</button>
                 <button class="btn btn-secondary" onclick="exportReport()">导出报告</button>
             </div>
+            <div class="btn-group" style="margin-top: 8px;">
+                <button class="btn btn-secondary" onclick="window.open('ma_backtest_comparison.html', '_blank')">📊 多股票对比</button>
+            </div>
         </div>
         
         <!-- 右侧内容区 -->
         <div class="content">
             <!-- K线图 + 买卖信号 -->
             <div class="chart-box">
-                <div class="chart-title">📈 K线图 & 买卖信号</div>
+                <div class="chart-title">📈 K线图 & 买卖信号
+                    <span style="font-size:12px;color:#6e7681;" id="chartDateRange"></span>
+                </div>
                 <div id="priceChart" style="height: 500px;"></div>
             </div>
             
@@ -329,7 +314,7 @@
             <!-- 量化指标面板 -->
             <div class="sidebar-title" style="margin-bottom: 12px;">📊 量化指标</div>
             <div class="metrics-grid" id="metricsGrid">
-                <!-- 动态生成 -->
+                <div class="loading"><div class="spinner"></div>请选择参数后点击"运行回测"</div>
             </div>
             
             <!-- 交易记录 -->
@@ -344,87 +329,120 @@
         // =========================================================================
         // 全局变量
         // =========================================================================
-        let stockData = null;
+        let stockData = null;      // 原始价格数据（整个区间，用于计算指标）
+        let backtestRange = null;  // 回测区间（用户选定的日期范围）
         let backtestResult = null;
         
+        const STOCK_BASE_PRICE = {
+            '300750.SZ': 180,  // 宁德时代
+            '601318.SH': 45,   // 中国平安
+            '600519.SH': 1500, // 贵州茅台
+            '601857.SH': 10,   // 中国石油
+            '002594.SZ': 300,  // 比亚迪
+        };
+
         // =========================================================================
-        // 初始化
+        // 仓位管理控件联动
         // =========================================================================
-        document.addEventListener('DOMContentLoaded', function() {
-            loadStockData();
-        });
-        
-        // =========================================================================
-        // 加载股票数据 (模拟)
-        // =========================================================================
-        function loadStockData() {
-            const stockCode = document.getElementById('stockSelect').value;
-            
-            // 模拟加载数据
-            document.getElementById('priceChart').innerHTML = `
-                <div class="loading">
-                    <div class="spinner"></div>
-                    正在加载 ${stockCode} 数据...
-                </div>
-            `;
-            
-            // 模拟API调用延迟
-            setTimeout(() => {
-                generateMockData(stockCode);
-                plotPriceChart();
-                plotNavChart();
-                updateMetrics();
-                updateTradesTable();
-            }, 800);
+        function onPositionSizingChange() {
+            const mode = document.getElementById('positionSizing').value;
+            document.getElementById('ratioGroup').style.display = mode === 'full' ? 'flex' : 'none';
+            document.getElementById('fixedSharesGroup').style.display = mode === 'fixed_shares' ? 'block' : 'none';
+            document.getElementById('fixedRatioGroup').style.display = mode === 'fixed_ratio' ? 'block' : 'none';
         }
-        
+
         // =========================================================================
-        // 生成模拟数据
+        // 读取前端参数 -> 对象
         // =========================================================================
-        function generateMockData(stockCode) {
-            const startDate = new Date('2024-07-03');
-            const endDate = new Date('2026-07-03');
-            const dates = [];
+        function getParams() {
+            const startDate = document.getElementById('startDate').value;
+            const endDate = document.getElementById('endDate').value;
+            const positionSizing = document.getElementById('positionSizing').value;
+            return {
+                stockCode:     document.getElementById('stockSelect').value,
+                startDate:      startDate,
+                endDate:        endDate,
+                shortWindow:    parseInt(document.getElementById('shortWindow').value),
+                longWindow:     parseInt(document.getElementById('longWindow').value),
+                maType:         document.getElementById('maType').value,
+                trendFilter:    document.getElementById('trendFilter').checked,
+                trendWindow:    parseInt(document.getElementById('trendWindow').value),
+                atrFilter:      document.getElementById('atrFilter').checked,
+                atrWindow:      parseInt(document.getElementById('atrWindow').value),
+                atrPercentile:  parseInt(document.getElementById('atrPercentile').value),
+                initialCapital:  parseFloat(document.getElementById('initialCapital').value),
+                commission:      parseFloat(document.getElementById('commission').value) / 100, // % -> 小数
+                slippage:       parseFloat(document.getElementById('slippage').value) / 100,
+                positionSizing: positionSizing,
+                buyRatio:       parseFloat(document.getElementById('buyRatio').value) / 100,
+                sellRatio:      parseFloat(document.getElementById('sellRatio').value) / 100,
+                fixedShares:    parseInt(document.getElementById('fixedShares').value),
+                fixedRatio:     parseFloat(document.getElementById('fixedRatio').value) / 100,
+            };
+        }
+
+        // =========================================================================
+        // 生成模拟数据（严格按用户选定的日期区间）
+        // =========================================================================
+        function generateMockData(params) {
+            const start = new Date(params.startDate);
+            const end   = new Date(params.endDate);
+            const basePrice = STOCK_BASE_PRICE[params.stockCode] || 100;
+
+            const dates  = [];
             const prices = [];
-            
-            let currentDate = new Date(startDate);
-            let price = 180;
-            
-            while (currentDate <= endDate) {
-                if (currentDate.getDay() !== 0 && currentDate.getDay() !== 6) {
+            let  currentDate = new Date(start);
+            let  price  = basePrice;
+
+            // 用种子随机，使同一股票在同一区间结果可重复
+            let seed = hashCode(params.stockCode + params.startDate);
+            function seededRandom() {
+                seed = (seed * 16807 + 0) % 2147483647;
+                return (seed - 1) / 2147483646;
+            }
+
+            while (currentDate <= end) {
+                const dow = currentDate.getDay();
+                if (dow !== 0 && dow !== 6) {
                     dates.push(currentDate.toISOString().split('T')[0]);
-                    
-                    // 模拟价格波动
-                    const change = (Math.random() - 0.48) * 5;
-                    price = Math.max(price + change, 100);
+                    const change = (seededRandom() - 0.48) * (basePrice * 0.03);
+                    price = Math.max(price + change, basePrice * 0.5);
                     prices.push(price);
                 }
                 currentDate.setDate(currentDate.getDate() + 1);
             }
-            
+
             // 计算均线
-            const shortWindow = parseInt(document.getElementById('shortWindow').value);
-            const longWindow = parseInt(document.getElementById('longWindow').value);
-            
-            const ma_short = calculateMA(prices, shortWindow);
-            const ma_long = calculateMA(prices, longWindow);
-            
+            const maShort = calculateMA(prices, params.shortWindow);
+            const maLong  = calculateMA(prices, params.longWindow);
+            const maTrend = params.trendFilter ? calculateMA(prices, params.trendWindow) : null;
+
             // 生成买卖信号
-            const signals = generateSignals(prices, ma_short, ma_long);
-            
+            const { buyIndices, sellIndices } = generateSignals(prices, maShort, maLong, maTrend, params);
+
+            // 组装 stockData
             stockData = {
-                dates: dates,
-                prices: prices,
-                ma_short: ma_short,
-                ma_long: ma_long,
-                signals: signals,
-                buySignals: signals.buy,
-                sellSignals: signals.sell
+                dates, prices, maShort, maLong, maTrend,
+                buyIndices, sellIndices,
+                params: { ...params }
             };
+
+            // 记录回测区间
+            backtestRange = { start: dates[0], end: dates[dates.length - 1] };
         }
-        
+
+        function hashCode(str) {
+            let hash = 0;
+            for (let i = 0; i < str.length; i++) {
+                const chr = str.charCodeAt(i);
+                hash = ((hash << 5) - hash) + chr;
+                hash |= 0;
+            }
+            return Math.abs(hash);
+        }
+
         // =========================================================================
-        // 计算移动平均
+        // 计算 MA
         // =========================================================================
         function calculateMA(prices, window) {
             const ma = [];
@@ -433,325 +451,481 @@
                     ma.push(null);
                 } else {
                     let sum = 0;
-                    for (let j = 0; j < window; j++) {
-                        sum += prices[i - j];
-                    }
+                    for (let j = 0; j < window; j++) sum += prices[i - j];
                     ma.push(sum / window);
                 }
             }
             return ma;
         }
-        
+
         // =========================================================================
-        // 生成买卖信号
+        // 生成买卖信号（含趋势过滤器 + ATR 过滤器模拟）
         // =========================================================================
-        function generateSignals(prices, ma_short, ma_long) {
-            const buy = [];
-            const sell = [];
-            
+        function generateSignals(prices, maShort, maLong, maTrend, params) {
+            const buyIndices  = [];
+            const sellIndices = [];
+
             for (let i = 1; i < prices.length; i++) {
-                if (ma_short[i] && ma_long[i] && ma_short[i-1] && ma_long[i-1]) {
-                    // 金叉：短均线上穿长均线
-                    if (ma_short[i-1] <= ma_long[i-1] && ma_short[i] > ma_long[i]) {
-                        buy.push({ date: i, price: prices[i] });
+                // 需要短均线和长均线都有值
+                if (!maShort[i] || !maLong[i] || !maShort[i-1] || !maLong[i-1]) continue;
+
+                let goldenCross = (maShort[i-1] <= maLong[i-1] && maShort[i] > maLong[i]);
+                let deathCross  = (maShort[i-1] >= maLong[i-1] && maShort[i] < maLong[i]);
+
+                // 趋势过滤器
+                if (params.trendFilter && maTrend) {
+                    if (goldenCross) {
+                        // 价格和短均线都在趋势均线之上才做多
+                        const priceAboveTrend = prices[i] > maTrend[i];
+                        const maShortAboveTrend = maShort[i] > maTrend[i];
+                        if (!priceAboveTrend || !maShortAboveTrend) goldenCross = false;
                     }
-                    // 死叉：短均线下穿长均线
-                    if (ma_short[i-1] >= ma_long[i-1] && ma_short[i] < ma_long[i]) {
-                        sell.push({ date: i, price: prices[i] });
-                    }
+                    // 死叉无趋势过滤（直接卖出）
                 }
+
+                // ATR 过滤器模拟（用价格波动率代替）
+                if (params.atrFilter && goldenCross) {
+                    // 计算最近 atrLookback 天的价格波动率百分位
+                    const lookback = Math.min(100, i);
+                    const recentChanges = [];
+                    for (let k = i - lookback + 1; k <= i; k++) {
+                        if (k > 0) recentChanges.push(Math.abs(prices[k] - prices[k-1]) / prices[k-1]);
+                    }
+                    recentChanges.sort((a, b) => a - b);
+                    const thresholdIdx = Math.floor(recentChanges.length * params.atrPercentile / 100);
+                    const threshold = recentChanges[thresholdIdx] || 0;
+                    const currentChange = Math.abs(prices[i] - prices[i-1]) / prices[i-1];
+                    if (currentChange < threshold) goldenCross = false; // 低波动，规避
+                }
+                if (params.atrFilter && deathCross) {
+                    const lookback = Math.min(100, i);
+                    const recentChanges = [];
+                    for (let k = i - lookback + 1; k <= i; k++) {
+                        if (k > 0) recentChanges.push(Math.abs(prices[k] - prices[k-1]) / prices[k-1]);
+                    }
+                    recentChanges.sort((a, b) => a - b);
+                    const thresholdIdx = Math.floor(recentChanges.length * params.atrPercentile / 100);
+                    const threshold = recentChanges[thresholdIdx] || 0;
+                    const currentChange = Math.abs(prices[i] - prices[i-1]) / prices[i-1];
+                    if (currentChange < threshold) deathCross = false;
+                }
+
+                if (goldenCross) buyIndices.push(i);
+                if (deathCross)  sellIndices.push(i);
             }
-            
-            return { buy, sell };
+            return { buyIndices, sellIndices };
         }
-        
+
         // =========================================================================
-        // 绘制K线图
+        // 模拟回测（按 params 指定的仓位管理规则）
+        // =========================================================================
+        function simulateBacktest(params) {
+            const { prices, dates, buyIndices, sellIndices } = stockData;
+            const commission = params.commission;
+            const slippage  = params.slippage;
+            const positionSizing = params.positionSizing;
+
+            let cash    = params.initialCapital;
+            let position = 0;
+            let nav      = [cash];
+            const trades = [];
+
+            // 合并买卖信号，按时间排序
+            const allSignals = [];
+            buyIndices.forEach(idx => allSignals.push({ idx, type: 'BUY' }));
+            sellIndices.forEach(idx => allSignals.push({ idx, type: 'SELL' }));
+            allSignals.sort((a, b) => a.idx - b.idx);
+
+            let signalPtr = 0;
+            let positionOpen = false;
+
+            for (let i = 0; i < prices.length; i++) {
+                const price = prices[i];
+
+                // 检查当天是否有信号
+                while (signalPtr < allSignals.length && allSignals[signalPtr].idx === i) {
+                    const sig = allSignals[signalPtr];
+
+                    if (sig.type === 'BUY' && !positionOpen) {
+                        const execPrice = price * (1 + slippage);
+                        let sharesToBuy;
+
+                        if (positionSizing === 'full') {
+                            sharesToBuy = Math.floor(cash * params.buyRatio / execPrice / (1 + commission));
+                        } else if (positionSizing === 'fixed_shares') {
+                            sharesToBuy = Math.min(params.fixedShares, Math.floor(cash / execPrice));
+                        } else {
+                            sharesToBuy = Math.floor(cash * params.fixedRatio * params.buyRatio / execPrice / (1 + commission));
+                        }
+
+                        if (sharesToBuy > 0) {
+                            const cost = sharesToBuy * execPrice * (1 + commission);
+                            cash -= cost;
+                            position += sharesToBuy;
+                            positionOpen = true;
+                            trades.push({
+                                date: dates[i], type: 'BUY',
+                                signalPrice: price, execPrice,
+                                shares: sharesToBuy,
+                                commission: sharesToBuy * execPrice * commission,
+                                slippage: sharesToBuy * (execPrice - price),
+                            });
+                        }
+                    }
+
+                    if (sig.type === 'SELL' && positionOpen) {
+                        const execPrice = price * (1 - slippage);
+                        let sharesToSell;
+
+                        if (positionSizing === 'full') {
+                            sharesToSell = Math.floor(position * params.sellRatio);
+                        } else if (positionSizing === 'fixed_shares') {
+                            sharesToSell = Math.min(params.fixedShares, position);
+                        } else {
+                            sharesToSell = Math.floor(position * params.fixedRatio * params.sellRatio);
+                        }
+
+                        if (sharesToSell > 0) {
+                            const revenue = sharesToSell * execPrice * (1 - commission);
+                            cash += revenue;
+                            position -= sharesToSell;
+                            if (position <= 0) positionOpen = false;
+                            trades.push({
+                                date: dates[i], type: 'SELL',
+                                signalPrice: price, execPrice,
+                                shares: sharesToSell,
+                                commission: sharesToSell * execPrice * commission,
+                                slippage: sharesToSell * (price - execPrice),
+                            });
+                        }
+                    }
+
+                    signalPtr++;
+                }
+
+                const curValue = cash + position * price;
+                nav.push(curValue);
+            }
+
+            // BUY-HOLD 净值（第一天全仓买入并持有）
+            const bhExecPrice = prices[0] * (1 + slippage);
+            const bhShares = Math.floor(params.initialCapital / bhExecPrice / (1 + commission));
+            const bhCash   = params.initialCapital - bhShares * bhExecPrice * (1 + commission);
+            const bhNav    = prices.map(p => bhCash + bhShares * p);
+
+            return { nav, bhNav, trades };
+        }
+
+        // =========================================================================
+        // 绘制 K 线图（用折线+蜡烛模拟）
         // =========================================================================
         function plotPriceChart() {
-            const data = stockData;
-            
-            // K线图 (用折线图模拟)
+            const { dates, prices, maShort, maLong, maTrend, buyIndices, sellIndices } = stockData;
+
+            // 收盘价折线
             const priceTrace = {
-                x: data.dates,
-                y: data.prices,
-                type: 'scatter',
-                mode: 'lines',
+                x: dates, y: prices,
+                type: 'scatter', mode: 'lines',
                 name: '收盘价',
                 line: { color: '#f0f6fc', width: 1.5 }
             };
-            
+
+            // 短均线
             const maShortTrace = {
-                x: data.dates,
-                y: data.ma_short,
-                type: 'scatter',
-                mode: 'lines',
-                name: `MA${document.getElementById('shortWindow').value}`,
+                x: dates, y: maShort,
+                type: 'scatter', mode: 'lines',
+                name: `短均线(${getParams().shortWindow})`,
                 line: { color: '#388bfd', width: 1.5 }
             };
-            
+
+            // 长均线
             const maLongTrace = {
-                x: data.dates,
-                y: data.ma_long,
-                type: 'scatter',
-                mode: 'lines',
-                name: `MA${document.getElementById('longWindow').value}`,
+                x: dates, y: maLong,
+                type: 'scatter', mode: 'lines',
+                name: `长均线(${getParams().longWindow})`,
                 line: { color: '#f5a623', width: 1.5 }
             };
-            
+
+            const traces = [priceTrace, maShortTrace, maLongTrace];
+
+            // 趋势均线
+            if (maTrend) {
+                traces.push({
+                    x: dates, y: maTrend,
+                    type: 'scatter', mode: 'lines',
+                    name: `趋势均线(${getParams().trendWindow})`,
+                    line: { color: '#a855f7', width: 1.5, dash: 'dash' }
+                });
+            }
+
             // 买入信号
-            const buyTrace = {
-                x: data.buySignals.map(s => data.dates[s.date]),
-                y: data.buySignals.map(s => s.price * 0.98),
-                type: 'scatter',
-                mode: 'markers',
-                name: '买入信号',
-                marker: { color: '#ef5350', size: 10, symbol: 'triangle-up' }
-            };
-            
+            if (buyIndices.length > 0) {
+                traces.push({
+                    x: buyIndices.map(i => dates[i]),
+                    y: buyIndices.map(i => prices[i] * 0.98),
+                    type: 'scatter', mode: 'markers',
+                    name: '买入信号',
+                    marker: { color: '#ef5350', size: 10, symbol: 'triangle-up' }
+                });
+            }
+
             // 卖出信号
-            const sellTrace = {
-                x: data.sellSignals.map(s => data.dates[s.date]),
-                y: data.sellSignals.map(s => s.price * 1.02),
-                type: 'scatter',
-                mode: 'markers',
-                name: '卖出信号',
-                marker: { color: '#26a69a', size: 10, symbol: 'triangle-down' }
-            };
-            
+            if (sellIndices.length > 0) {
+                traces.push({
+                    x: sellIndices.map(i => dates[i]),
+                    y: sellIndices.map(i => prices[i] * 1.02),
+                    type: 'scatter', mode: 'markers',
+                    name: '卖出信号',
+                    marker: { color: '#26a69a', size: 10, symbol: 'triangle-down' }
+                });
+            }
+
             const layout = {
-                paper_bgcolor: '#161b22',
-                plot_bgcolor: '#0d1117',
+                paper_bgcolor: '#161b22', plot_bgcolor: '#0d1117',
                 font: { color: '#c9d1d9' },
-                xaxis: { gridcolor: '#21262d', zerolinecolor: '#21262d' },
-                yaxis: { gridcolor: '#21262d', zerolinecolor: '#21262d', side: 'right' },
+                xaxis: { gridcolor: '#21262d', zerolinecolor: '#21262d', type: 'date' },
+                yaxis: { gridcolor: '#21262d', zerolinecolor: '#21262d', side: 'right', title: '价格（元）' },
                 showlegend: true,
                 legend: { x: 0, y: 1, bgcolor: 'rgba(22,27,34,0.8)' },
                 margin: { t: 20, r: 60, b: 40, l: 60 }
             };
-            
-            Plotly.newPlot('priceChart', [priceTrace, maShortTrace, maLongTrace, buyTrace, sellTrace], layout);
+
+            Plotly.newPlot('priceChart', traces, layout, {responsive: true});
         }
-        
+
         // =========================================================================
         // 绘制净值曲线
         // =========================================================================
-        function plotNavChart() {
+        function plotNavChart(nav, bhNav) {
             const dates = stockData.dates;
-            const prices = stockData.prices;
-            
-            // 模拟策略净值
-            let strategyNav = [100000];
-            let bhNav = [100000];
-            let position = false;
-            
-            for (let i = 1; i < prices.length; i++) {
-                // BUY-HOLD
-                bhNav.push(100000 * (prices[i] / prices[0]));
-                
-                // 策略 (简单模拟)
-                if (stockData.buySignals.find(s => s.date === i)) {
-                    position = true;
-                }
-                if (stockData.sellSignals.find(s => s.date === i)) {
-                    position = false;
-                }
-                
-                const dailyReturn = prices[i] / prices[i-1] - 1;
-                const prevNav = strategyNav[strategyNav.length - 1];
-                
-                if (position) {
-                    strategyNav.push(prevNav * (1 + dailyReturn));
-                } else {
-                    strategyNav.push(prevNav);
-                }
-            }
-            
+
             const strategyTrace = {
-                x: dates,
-                y: strategyNav,
-                type: 'scatter',
-                mode: 'lines',
+                x: dates, y: nav,
+                type: 'scatter', mode: 'lines',
                 name: '策略净值',
                 line: { color: '#388bfd', width: 2 }
             };
-            
             const bhTrace = {
-                x: dates,
-                y: bhNav,
-                type: 'scatter',
-                mode: 'lines',
+                x: dates, y: bhNav,
+                type: 'scatter', mode: 'lines',
                 name: 'BUY-HOLD',
                 line: { color: '#f5a623', width: 2, dash: 'dash' }
             };
-            
+
             const layout = {
-                paper_bgcolor: '#161b22',
-                plot_bgcolor: '#0d1117',
+                paper_bgcolor: '#161b22', plot_bgcolor: '#0d1117',
                 font: { color: '#c9d1d9' },
                 xaxis: { gridcolor: '#21262d' },
-                yaxis: { gridcolor: '#21262d', side: 'right' },
+                yaxis: { gridcolor: '#21262d', side: 'right', title: '净值（元）' },
                 showlegend: true,
                 legend: { x: 0, y: 1, bgcolor: 'rgba(22,27,34,0.8)' },
                 margin: { t: 20, r: 60, b: 40, l: 60 }
             };
-            
-            Plotly.newPlot('navChart', [strategyTrace, bhTrace], layout);
+
+            Plotly.newPlot('navChart', [strategyTrace, bhTrace], layout, {responsive: true});
         }
-        
+
         // =========================================================================
-        // 更新量化指标
+        // 更新量化指标面板
         // =========================================================================
-        function updateMetrics() {
+        function updateMetrics(nav, bhNav, trades) {
             const prices = stockData.prices;
-            const finalPrice = prices[prices.length - 1];
-            const initialPrice = prices[0];
-            
-            const totalReturn = (finalPrice - initialPrice) / initialPrice * 100;
-            const numTrades = stockData.buySignals.length + stockData.sellSignals.length;
-            
+            const params = getParams();
+
+            // 策略收益率
+            const strategyReturn = (nav[nav.length - 1] - nav[0]) / nav[0];
+            // BH 收益率
+            const bhReturn = (bhNav[bhNav.length - 1] - bhNav[0]) / bhNav[0];
+            const excessReturn = strategyReturn - bhReturn;
+
+            // 年化收益率
+            const days = stockData.dates.length;
+            const years = days / 252;
+            const annualReturn = years > 0 ? (1 + strategyReturn) ** (1 / years) - 1 : 0;
+            const bhAnnualReturn = years > 0 ? (1 + bhReturn) ** (1 / years) - 1 : 0;
+
+            // 最大回撤
+            let maxDD = 0, peak = nav[0];
+            for (let i = 0; i < nav.length; i++) {
+                if (nav[i] > peak) peak = nav[i];
+                const dd = (nav[i] - peak) / peak;
+                if (dd < maxDD) maxDD = dd;
+            }
+
+            // 夏普比率（简化：用日收益率均值/标准差 * sqrt(252)）
+            const dailyReturns = [];
+            for (let i = 1; i < nav.length; i++) {
+                dailyReturns.push((nav[i] - nav[i-1]) / nav[i-1]);
+            }
+            const meanRet = dailyReturns.reduce((a, b) => a + b, 0) / dailyReturns.length;
+            const stdRet  = Math.sqrt(dailyReturns.map(r => (r - meanRet) ** 2).reduce((a, b) => a + b, 0) / dailyReturns.length);
+            const sharpe = stdRet > 0 ? (meanRet / stdRet) * Math.sqrt(252) : 0;
+
+            // 胜率 & 盈亏比
+            let winCount = 0, totalSell = 0, totalProfit = 0, totalLoss = 0;
+            let lastBuyPrice = null;
+            trades.forEach(t => {
+                if (t.type === 'BUY') lastBuyPrice = t.execPrice;
+                if (t.type === 'SELL' && lastBuyPrice) {
+                    totalSell++;
+                    const pnl = t.execPrice - lastBuyPrice;
+                    if (pnl > 0) winCount++;
+                    if (pnl > 0) totalProfit += pnl;
+                    else totalLoss += Math.abs(pnl);
+                }
+            });
+            const winRate = totalSell > 0 ? winCount / totalSell : 0;
+            const plRatio = totalLoss > 0 ? totalProfit / totalLoss : (totalProfit > 0 ? Infinity : 0);
+
+            // 交易成本统计
+            let totalCommission = 0, totalSlippage = 0;
+            trades.forEach(t => { totalCommission += t.commission; totalSlippage += t.slippage; });
+            const totalCost = totalCommission + totalSlippage;
+            const costPct  = nav[nav.length - 1] > 0 ? totalCost / nav[nav.length - 1] * 100 : 0;
+
             const metrics = [
-                { label: '策略总收益率', value: (totalReturn * 0.1).toFixed(2) + '%', type: 'strategy' },
-                { label: 'BUY-HOLD收益率', value: totalReturn.toFixed(2) + '%', type: 'bh' },
-                { label: '超额收益', value: (totalReturn * 0.1 - totalReturn).toFixed(2) + '%', type: 'excess' },
-                { label: '年化收益率', value: (totalReturn * 0.05).toFixed(2) + '%', type: 'strategy' },
-                { label: '最大回撤', value: '-27.46%', type: 'negative' },
-                { label: '夏普比率', value: '0.08', type: 'neutral' },
-                { label: '胜率', value: '50.00%', type: 'neutral' },
-                { label: '盈亏比', value: '4.28', type: 'positive' },
-                { label: '交易次数', value: numTrades.toString(), type: 'neutral' },
-                { label: '累计手续费', value: '516.87 元', type: 'neutral' },
-                { label: '累计滑点成本', value: '516.77 元', type: 'neutral' },
-                { label: '交易成本占比', value: '1.02%', type: 'neutral' }
+                { label: '策略总收益率', value: (strategyReturn * 100).toFixed(2) + '%', cls: strategyReturn >= 0 ? 'positive' : 'negative' },
+                { label: 'BUY-HOLD收益率', value: (bhReturn * 100).toFixed(2) + '%', cls: bhReturn >= 0 ? 'positive' : 'negative' },
+                { label: '超额收益', value: (excessReturn * 100).toFixed(2) + '%', cls: excessReturn >= 0 ? 'positive' : 'negative' },
+                { label: '年化收益率', value: (annualReturn * 100).toFixed(2) + '%', cls: annualReturn >= 0 ? 'positive' : 'negative' },
+                { label: '最大回撤', value: (maxDD * 100).toFixed(2) + '%', cls: 'negative' },
+                { label: '夏普比率', value: sharpe.toFixed(2), cls: sharpe >= 0 ? 'positive' : 'negative' },
+                { label: '胜率', value: (winRate * 100).toFixed(1) + '%', cls: winRate >= 0.5 ? 'positive' : 'negative' },
+                { label: '盈亏比', value: plRatio === Infinity ? '∞' : plRatio.toFixed(2), cls: plRatio >= 1 ? 'positive' : 'negative' },
+                { label: '交易次数', value: String(trades.length), cls: '' },
+                { label: '累计手续费', value: totalCommission.toFixed(2) + ' 元', cls: '' },
+                { label: '累计滑点成本', value: totalSlippage.toFixed(2) + ' 元', cls: '' },
+                { label: '交易成本占比', value: costPct.toFixed(2) + '%', cls: '' },
             ];
-            
+
             const grid = document.getElementById('metricsGrid');
             grid.innerHTML = '';
-            
             metrics.forEach(m => {
                 const card = document.createElement('div');
                 card.className = 'metric-card';
                 card.innerHTML = `
                     <div class="metric-label">${m.label}</div>
-                    <div class="metric-value ${m.type === 'positive' ? 'positive' : m.type === 'negative' ? 'negative' : ''}">${m.value}</div>
+                    <div class="metric-value ${m.cls}">${m.value}</div>
                 `;
                 grid.appendChild(card);
             });
         }
-        
+
         // =========================================================================
         // 更新交易记录表
         // =========================================================================
-        function updateTradesTable() {
-            const buySignals = stockData.buySignals;
-            const sellSignals = stockData.sellSignals;
-            
-            let tableHTML = `
-                <table>
-                    <thead>
-                        <tr>
-                            <th>序号</th>
-                            <th>日期</th>
-                            <th>操作</th>
-                            <th>价格</th>
-                            <th>数量</th>
-                            <th>手续费</th>
-                            <th>滑点成本</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-            `;
-            
-            let tradeCount = 0;
-            const allSignals = [];
-            
-            buySignals.forEach(s => {
-                allSignals.push({ date: s.date, type: 'BUY', price: s.price });
-            });
-            
-            sellSignals.forEach(s => {
-                allSignals.push({ date: s.date, type: 'SELL', price: s.price });
-            });
-            
-            allSignals.sort((a, b) => a.date - b.date);
-            
-            allSignals.forEach((signal, idx) => {
-                const date = stockData.dates[signal.date];
-                const shares = signal.type === 'BUY' ? Math.floor(100000 / signal.price) : '-';
-                const commission = (signal.price * 1000 * 0.001).toFixed(2);
-                const slippage = (signal.price * 1000 * 0.001).toFixed(2);
-                
-                tableHTML += `
-                    <tr>
-                        <td>${idx + 1}</td>
-                        <td>${date}</td>
-                        <td class="${signal.type === 'BUY' ? 'buy-signal' : 'sell-signal'}">${signal.type === 'BUY' ? '📈 买入' : '📉 卖出'}</td>
-                        <td>${signal.price.toFixed(2)}</td>
-                        <td>${shares}</td>
-                        <td>${commission}</td>
-                        <td>${slippage}</td>
-                    </tr>
-                `;
-            });
-            
-            tableHTML += '</tbody></table>';
-            
-            if (allSignals.length === 0) {
-                tableHTML = '<div style="padding: 20px; text-align: center; color: #6e7681;">暂无交易记录</div>';
+        function updateTradesTable(trades) {
+            if (trades.length === 0) {
+                document.getElementById('tradesTable').innerHTML =
+                    '<div style="padding:20px;text-align:center;color:#6e7681;">暂无交易记录</div>';
+                return;
             }
-            
-            document.getElementById('tradesTable').innerHTML = tableHTML;
+
+            let html = `<table><thead><tr>
+                <th>序号</th><th>日期</th><th>操作</th><th>理论价</th><th>执行价</th>
+                <th>数量</th><th>手续费</th><th>滑点成本</th>
+            </tr></thead><tbody>`;
+
+            trades.forEach((t, i) => {
+                const opClass = t.type === 'BUY' ? 'buy-signal' : 'sell-signal';
+                const opText  = t.type === 'BUY' ? '📈 买入' : '📉 卖出';
+                html += `<tr>
+                    <td>${i + 1}</td>
+                    <td>${t.date}</td>
+                    <td class="${opClass}">${opText}</td>
+                    <td>${t.signalPrice.toFixed(2)}</td>
+                    <td>${t.execPrice.toFixed(2)}</td>
+                    <td>${t.shares}</td>
+                    <td>${t.commission.toFixed(2)}</td>
+                    <td>${t.slippage.toFixed(2)}</td>
+                </tr>`;
+            });
+            html += '</tbody></table>';
+            document.getElementById('tradesTable').innerHTML = html;
         }
-        
+
         // =========================================================================
-        // 事件处理
+        // 运行回测（主入口）
         // =========================================================================
-        function onStockChange() {
-            loadStockData();
-        }
-        
         function runBacktest() {
-            // 显示加载动画
-            document.getElementById('metricsGrid').innerHTML = `
-                <div class="loading" style="grid-column: 1 / -1;">
-                    <div class="spinner"></div>
-                    正在运行回测...
-                </div>
-            `;
-            
-            // 模拟回测延迟
+            const params = getParams();
+
+            // 验证日期
+            if (new Date(params.startDate) >= new Date(params.endDate)) {
+                alert('⚠️ 开始日期必须早于结束日期！');
+                return;
+            }
+
+            // 显示加载
+            document.getElementById('metricsGrid').innerHTML =
+                `<div class="loading" style="grid-column:1/-1;"><div class="spinner"></div>正在运行回测...</div>`;
+            document.getElementById('priceChart').innerHTML =
+                `<div class="loading"><div class="spinner"></div>生成数据中...</div>`;
+
             setTimeout(() => {
-                generateMockData(document.getElementById('stockSelect').value);
+                // 1. 生成模拟数据（按用户选定区间）
+                generateMockData(params);
+
+                // 2. 模拟回测
+                const { nav, bhNav, trades } = simulateBacktest(params);
+
+                // 3. 绘制图表
                 plotPriceChart();
-                plotNavChart();
-                updateMetrics();
-                updateTradesTable();
-                
-                // 显示完成提示
-                alert('✅ 回测完成！\n\n策略参数已应用，请查看右侧图表和指标。');
-            }, 1500);
+                plotNavChart(nav, bhNav);
+
+                // 4. 更新指标 & 交易表
+                updateMetrics(nav, bhNav, trades);
+                updateTradesTable(trades);
+
+                // 5. 更新图表标题中的日期范围
+                document.getElementById('chartDateRange').textContent =
+                    `（${backtestRange.start} ~ ${backtestRange.end}）`;
+
+                backtestResult = { nav, bhNav, trades };
+            }, 500);
         }
-        
+
+        // =========================================================================
+        // 重置参数
+        // =========================================================================
         function resetParams() {
-            document.getElementById('shortWindow').value = 5;
-            document.getElementById('longWindow').value = 15;
-            document.getElementById('maType').value = 'MA';
+            document.getElementById('shortWindow').value   = 5;
+            document.getElementById('longWindow').value    = 15;
+            document.getElementById('maType').value        = 'MA';
             document.getElementById('trendFilter').checked = true;
-            document.getElementById('trendWindow').value = 120;
-            document.getElementById('atrFilter').checked = true;
-            document.getElementById('atrWindow').value = 14;
+            document.getElementById('trendWindow').value  = 120;
+            document.getElementById('atrFilter').checked   = true;
+            document.getElementById('atrWindow').value     = 14;
             document.getElementById('atrPercentile').value = 20;
             document.getElementById('initialCapital').value = 100000;
-            document.getElementById('commission').value = 0.1;
-            document.getElementById('slippage').value = 0.1;
+            document.getElementById('commission').value     = 0.03;  // 万三
+            document.getElementById('slippage').value      = 0.01;  // 万一
             document.getElementById('positionSizing').value = 'full';
-            
+            document.getElementById('buyRatio').value      = 100;
+            document.getElementById('sellRatio').value     = 100;
+            document.getElementById('fixedShares').value   = 100;
+            document.getElementById('fixedRatio').value     = 50;
+            document.getElementById('startDate').value     = '2024-07-03';
+            document.getElementById('endDate').value       = '2026-07-03';
+            onPositionSizingChange();
             alert('✅ 参数已重置为默认值！');
         }
-        
+
+        // =========================================================================
+        // 导出报告（占位）
+        // =========================================================================
         function exportReport() {
             alert('📄 报告导出功能开发中...\n\n将导出包含以下内容的PDF报告：\n- 回测参数配置\n- K线图 & 买卖信号\n- 净值曲线图\n- 量化指标汇总\n- 交易记录明细');
         }
+
+        // =========================================================================
+        // 初始化
+        // =========================================================================
+        document.addEventListener('DOMContentLoaded', function() {
+            onPositionSizingChange();
+            // 默认加载一次
+            runBacktest();
+        });
     </script>
 </body>
 </html>
