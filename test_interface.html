@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>测试页面 - 均线策略回测</title>
+    <script src="https://cdn.plot.ly/plotly-2.27.0.min.js"></script>
+    <style>
+        body { font-family: Arial, sans-serif; padding: 20px; background: #0d1117; color: #e0e0e0; }
+        .test-section { background: #161b22; padding: 20px; margin-bottom: 20px; border-radius: 8px; }
+        .success { color: #3fb950; }
+        .error { color: #f85149; }
+        button { padding: 10px 20px; margin: 5px; cursor: pointer; }
+    </style>
+</head>
+<body>
+    <h1>🧪 HTML界面测试</h1>
+    
+    <div class="test-section">
+        <h2>测试1: 加载JSON数据</h2>
+        <button onclick="testLoadJSON()">测试加载JSON</button>
+        <div id="test1Result"></div>
+    </div>
+    
+    <div class="test-section">
+        <h2>测试2: 计算均线</h2>
+        <button onclick="testCalculateMA()">测试计算MA</button>
+        <div id="test2Result"></div>
+    </div>
+    
+    <div class="test-section">
+        <h2>测试3: 生成模拟图表</h2>
+        <button onclick="testPlotChart()">测试绘图</button>
+        <div id="testChart" style="height: 300px;"></div>
+    </div>
+    
+    <div class="test-section">
+        <h2>测试4: 完整回测流程</h2>
+        <button onclick="testFullBacktest()">测试完整回测</button>
+        <div id="test4Result"></div>
+    </div>
+
+    <script>
+        let testData = null;
+        
+        // 测试1: 加载JSON数据
+        async function testLoadJSON() {
+            const resultDiv = document.getElementById('test1Result');
+            resultDiv.innerHTML = '⏳ 正在加载数据...';
+            
+            try {
+                const response = await fetch('data/json/600519_SH.json');
+                if (!response.ok) throw new Error('文件不存在');
+                
+                testData = await response.json();
+                
+                resultDiv.innerHTML = `
+                    <div class="success">✅ 测试1通过！</div>
+                    <div>股票代码: ${testData.ts_code}</div>
+                    <div>股票名称: ${testData.name}</div>
+                    <div>数据条数: ${testData.dates.length}</div>
+                    <div>日期范围: ${testData.dates[0]} 至 ${testData.dates[testData.dates.length - 1]}</div>
+                `;
+            } catch (error) {
+                resultDiv.innerHTML = `<div class="error">❌ 测试1失败: ${error.message}</div>`;
+            }
+        }
+        
+        // 测试2: 计算均线
+        function testCalculateMA() {
+            const resultDiv = document.getElementById('test2Result');
+            
+            if (!testData) {
+                resultDiv.innerHTML = '<div class="error">❌ 请先运行测试1加载数据</div>';
+                return;
+            }
+            
+            try {
+                const prices = testData.close;
+                const window = 5;
+                
+                // 计算MA5
+                const ma5 = [];
+                for (let i = 0; i < prices.length; i++) {
+                    if (i < window - 1) {
+                        ma5.push(null);
+                    } else {
+                        let sum = 0;
+                        for (let j = i - window + 1; j <= i; j++) {
+                            sum += prices[j];
+                        }
+                        ma5.push(sum / window);
+                    }
+                }
+                
+                resultDiv.innerHTML = `
+                    <div class="success">✅ 测试2通过！</div>
+                    <div>MA5计算完成</div>
+                    <div>前10个MA5值:</div>
+                    <div>${ma5.slice(0, 10).map((v, i) => `第${i+1}天: ${v ? v.toFixed(2) : 'N/A'}`).join('<br>')}</div>
+                `;
+            } catch (error) {
+                resultDiv.innerHTML = `<div class="error">❌ 测试2失败: ${error.message}</div>`;
+            }
+        }
+        
+        // 测试3: 生成图表
+        function testPlotChart() {
+            const resultDiv = document.getElementById('testChart');
+            
+            if (!testData) {
+                alert('请先运行测试1加载数据');
+                return;
+            }
+            
+            try {
+                const trace = {
+                    x: testData.dates.slice(0, 50),  // 只显示前50天
+                    y: testData.close.slice(0, 50),
+                    type: 'line',
+                    name: '收盘价',
+                    line: { color: '#388bfd' }
+                };
+                
+                Plotly.newPlot('testChart', [trace], {
+                    title: '测试图表 - 贵州茅台收盘价',
+                    xaxis: { title: '日期' },
+                    yaxis: { title: '价格（元）' }
+                });
+                
+                resultDiv.innerHTML = '<div class="success">✅ 测试3通过！图表已生成</div>';
+            } catch (error) {
+                resultDiv.innerHTML = `<div class="error">❌ 测试3失败: ${error.message}</div>`;
+            }
+        }
+        
+        // 测试4: 完整回测
+        function testFullBacktest() {
+            const resultDiv = document.getElementById('test4Result');
+            resultDiv.innerHTML = '⏳ 正在执行回测...';
+            
+            if (!testData) {
+                resultDiv.innerHTML = '<div class="error">❌ 请先运行测试1加载数据</div>';
+                return;
+            }
+            
+            try {
+                const prices = testData.close;
+                const initialCapital = 100000;
+                const commission = 0.0003;
+                const slippage = 0.0001;
+                
+                // 计算均线
+                const ma5 = [];
+                const ma15 = [];
+                for (let i = 0; i < prices.length; i++) {
+                    if (i < 4) {
+                        ma5.push(null);
+                    } else {
+                        let sum = 0;
+                        for (let j = i - 4; j <= i; j++) sum += prices[j];
+                        ma5.push(sum / 5);
+                    }
+                    
+                    if (i < 14) {
+                        ma15.push(null);
+                    } else {
+                        let sum = 0;
+                        for (let j = i - 14; j <= i; j++) sum += prices[j];
+                        ma15.push(sum / 15);
+                    }
+                }
+                
+                // 计算信号
+                const signals = [];
+                for (let i = 0; i < prices.length; i++) {
+                    if (i === 0 || !ma5[i] || !ma15[i]) {
+                        signals.push(0);
+                    } else if (ma5[i-1] <= ma15[i-1] && ma5[i] > ma15[i]) {
+                        signals.push(1);
+                    } else if (ma5[i-1] >= ma15[i-1] && ma5[i] < ma15[i]) {
+                        signals.push(-1);
+                    } else {
+                        signals.push(0);
+                    }
+                }
+                
+                // 执行回测
+                let cash = initialCapital;
+                let shares = 0;
+                let nav = [initialCapital];
+                let trades = 0;
+                
+                for (let i = 1; i < prices.length; i++) {
+                    if (signals[i] === 1 && shares === 0) {
+                        const buyPrice = prices[i] * (1 + slippage);
+                        const sharesToBuy = Math.floor(cash / buyPrice / (1 + commission));
+                        if (sharesToBuy > 0) {
+                            cash -= sharesToBuy * buyPrice * (1 + commission);
+                            shares = sharesToBuy;
+                            trades++;
+                        }
+                    } else if (signals[i] === -1 && shares > 0) {
+                        const sellPrice = prices[i] * (1 - slippage);
+                        cash += shares * sellPrice * (1 - commission);
+                        shares = 0;
+                        trades++;
+                    }
+                    nav.push(cash + shares * prices[i]);
+                }
+                
+                const totalReturn = (nav[nav.length - 1] - nav[0]) / nav[0] * 100;
+                
+                resultDiv.innerHTML = `
+                    <div class="success">✅ 测试4通过！回测完成</div>
+                    <div>初始资金: ${initialCapital.toLocaleString()} 元</div>
+                    <div>最终净值: ${nav[nav.length - 1].toFixed(2)} 元</div>
+                    <div>总收益率: ${totalReturn.toFixed(2)}%</div>
+                    <div>交易次数: ${trades}</div>
+                `;
+            } catch (error) {
+                resultDiv.innerHTML = `<div class="error">❌ 测试4失败: ${error.message}</div>`;
+            }
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,867 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>均线策略回测系统 - 真实数据版</title>
+    <script src="https://cdn.plot.ly/plotly-2.27.0.min.js"></script>
+    <style>
+        * { margin:0; padding:0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC",
+                         "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
+            background: #0d1117; color: #e0e0e0; min-height: 100vh;
+            display: flex; flex-direction: column;
+        }
+        .header {
+            background: linear-gradient(135deg, #161b22 0%, #0d1117 100%);
+            padding: 16px 24px;
+            border-bottom: 1px solid #30363d;
+            display: flex; align-items: center; gap: 24px;
+            flex-wrap: wrap;
+        }
+        .header h1 { font-size: 20px; color: #f0f6fc; font-weight: 600; }
+        .header h1 span { color: #388bfd; }
+        .header-info { font-size: 13px; color: #8b949e; }
+        .header-badge {
+            padding: 4px 12px; border-radius: 12px; font-size: 12px; font-weight: 500;
+            background: #238636; color: #fff;
+        }
+        .main-layout { display: flex; flex: 1; overflow: hidden; }
+        .sidebar {
+            width: 320px; background: #161b22; border-right: 1px solid #30363d;
+            overflow-y: auto; padding: 16px; flex-shrink: 0;
+        }
+        .sidebar-section { margin-bottom: 20px; }
+        .sidebar-title {
+            font-size: 13px; color: #f0f6fc; font-weight: 600;
+            margin-bottom: 12px; padding-bottom: 8px;
+            border-bottom: 1px solid #21262d;
+            display: flex; align-items: center; gap: 8px;
+        }
+        .sidebar-title::before {
+            content: ''; display: inline-block; width: 3px; height: 14px;
+            background: #388bfd; border-radius: 2px;
+        }
+        .form-group { margin-bottom: 12px; }
+        .form-label {
+            display: block; font-size: 12px; color: #8b949e;
+            margin-bottom: 4px;
+        }
+        .form-input, .form-select {
+            width: 100%; padding: 8px 10px;
+            background: #0d1117; border: 1px solid #30363d;
+            border-radius: 6px; color: #e0e0e0; font-size: 13px;
+        }
+        .form-input:focus, .form-select:focus {
+            outline: none; border-color: #388bfd;
+        }
+        .form-row { display: flex; gap: 8px; }
+        .form-row .form-group { flex: 1; }
+        .checkbox-group {
+            display: flex; align-items: center; gap: 8px;
+            margin-bottom: 8px;
+        }
+        .checkbox-group input[type="checkbox"] {
+            width: 16px; height: 16px; accent-color: #388bfd;
+        }
+        .checkbox-group label {
+            font-size: 13px; color: #c9d1d9; cursor: pointer;
+        }
+        .btn {
+            padding: 10px 16px; border: none; border-radius: 6px;
+            font-size: 13px; font-weight: 500; cursor: pointer;
+            transition: all 0.2s;
+        }
+        .btn-primary { background: #238636; color: #fff; width: 100%; }
+        .btn-primary:hover { background: #2ea043; }
+        .btn-primary:disabled { background: #30363d; cursor: not-allowed; }
+        .btn-secondary {
+            background: #21262d; color: #c9d1d9; width: 100%;
+            border: 1px solid #30363d;
+        }
+        .btn-secondary:hover { background: #30363d; }
+        .btn-group { display: flex; gap: 8px; margin-top: 16px; }
+        .btn-group .btn { flex: 1; }
+        .content { flex: 1; overflow-y: auto; padding: 16px; }
+        .chart-box {
+            background: #161b22; border: 1px solid #30363d;
+            border-radius: 8px; padding: 16px; margin-bottom: 16px;
+        }
+        .chart-title {
+            font-size: 14px; color: #f0f6fc; font-weight: 500;
+            margin-bottom: 12px; display: flex; align-items: center; gap: 8px;
+        }
+        .metrics-grid {
+            display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 12px; margin-bottom: 16px;
+        }
+        .metric-card {
+            background: #161b22; border: 1px solid #30363d;
+            border-radius: 8px; padding: 16px;
+        }
+        .metric-label { font-size: 12px; color: #8b949e; margin-bottom: 4px; }
+        .metric-value { font-size: 20px; color: #f0f6fc; font-weight: 600; }
+        .metric-value.positive { color: #f85149; }
+        .metric-value.negative { color: #3fb950; }
+        .trades-table {
+            width: 100%; border-collapse: collapse; font-size: 13px;
+        }
+        .trades-table th {
+            background: #21262d; color: #8b949e; padding: 8px;
+            text-align: left; font-weight: 500;
+        }
+        .trades-table td { padding: 8px; border-bottom: 1px solid #21262d; }
+        .trades-table tr:hover { background: #1c2128; }
+        .loading {
+            display: none; text-align: center; padding: 40px;
+            color: #8b949e;
+        }
+        .loading.active { display: block; }
+        .spinner {
+            border: 3px solid #21262d; border-top: 3px solid #388bfd;
+            border-radius: 50%; width: 40px; height: 40px;
+            animation: spin 1s linear infinite; margin: 0 auto 16px;
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
+        .alert {
+            padding: 12px; border-radius: 6px; margin-bottom: 16px;
+            font-size: 13px;
+        }
+        .alert-info { background: #0c2d6b; border: 1px solid #1f6feb; color: #c9d1d9; }
+        .alert-success { background: #0d2818; border: 1px solid #238636; color: #3fb950; }
+        .alert-error { background: #3b0d0d; border: 1px solid #f85149; color: #f85149; }
+        
+        /* 数据源选择样式 */
+        .data-source-selector {
+            display: flex; gap: 8px; margin-bottom: 16px;
+        }
+        .data-source-btn {
+            flex: 1; padding: 8px; border: 1px solid #30363d;
+            background: #0d1117; color: #8b949e; border-radius: 6px;
+            cursor: pointer; font-size: 13px; text-align: center;
+            transition: all 0.2s;
+        }
+        .data-source-btn.active {
+            background: #1f6feb; color: #fff; border-color: #1f6feb;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1><span>📈</span> 均线策略回测系统</h1>
+        <div class="header-info">双均线策略 + 趋势过滤器 + ATR过滤器</div>
+        <div class="header-badge">真实数据版</div>
+    </div>
+
+    <div class="main-layout">
+        <!-- 左侧边栏 -->
+        <div class="sidebar">
+            <!-- 数据源选择 -->
+            <div class="sidebar-section">
+                <div class="sidebar-title">数据源</div>
+                <div class="data-source-selector">
+                    <button class="data-source-btn active" onclick="setDataSource('real')">真实数据</button>
+                    <button class="data-source-btn" onclick="setDataSource('mock')">模拟数据</button>
+                </div>
+                <div id="apiStatus" class="alert alert-info" style="display: none;">
+                    API服务器状态检测中...
+                </div>
+            </div>
+
+            <!-- 股票选择 -->
+            <div class="sidebar-section">
+                <div class="sidebar-title">股票选择</div>
+                <div class="form-group">
+                    <label class="form-label">选择股票</label>
+                    <select id="stockSelect" class="form-select">
+                        <option value="300750.SZ">宁德时代 (300750.SZ) - 科技/新能源</option>
+                        <option value="601318.SH">中国平安 (601318.SH) - 金融</option>
+                        <option value="600519.SH">贵州茅台 (600519.SH) - 消费</option>
+                        <option value="601857.SH">中国石油 (601857.SH) - 能源</option>
+                        <option value="002594.SZ">比亚迪 (002594.SZ) - 制造</option>
+                    </select>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label class="form-label">开始日期</label>
+                        <input type="date" id="startDate" class="form-input" value="2024-07-03">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">结束日期</label>
+                        <input type="date" id="endDate" class="form-input" value="2026-07-03">
+                    </div>
+                </div>
+            </div>
+
+            <!-- 均线参数 -->
+            <div class="sidebar-section">
+                <div class="sidebar-title">均线参数</div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label class="form-label">短均线周期</label>
+                        <input type="number" id="shortWindow" class="form-input" value="5" min="1" max="50">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">长均线周期</label>
+                        <input type="number" id="longWindow" class="form-input" value="15" min="1" max="200">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">均线类型</label>
+                    <select id="maType" class="form-select">
+                        <option value="MA">MA（简单移动平均）</option>
+                        <option value="EMA">EMA（指数移动平均）</option>
+                    </select>
+                </div>
+            </div>
+
+            <!-- 信号过滤器 -->
+            <div class="sidebar-section">
+                <div class="sidebar-title">信号过滤器</div>
+                <div class="checkbox-group">
+                    <input type="checkbox" id="trendFilter" checked>
+                    <label for="trendFilter">趋势过滤器（120日均线）</label>
+                </div>
+                <div class="checkbox-group">
+                    <input type="checkbox" id="atrFilter" checked>
+                    <label for="atrFilter">ATR过滤器（规避低波动）</label>
+                </div>
+                <div class="form-row" id="atrParams" style="display: none;">
+                    <div class="form-group">
+                        <label class="form-label">ATR周期</label>
+                        <input type="number" id="atrWindow" class="form-input" value="14" min="1" max="50">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">ATR百分位</label>
+                        <input type="number" id="atrPercentile" class="form-input" value="20" min="1" max="100">
+                    </div>
+                </div>
+            </div>
+
+            <!-- 回测参数 -->
+            <div class="sidebar-section">
+                <div class="sidebar-title">回测参数</div>
+                <div class="form-group">
+                    <label class="form-label">初始资金（元）</label>
+                    <input type="number" id="initialCapital" class="form-input" value="100000" min="1000" step="1000">
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label class="form-label">手续费率（%）</label>
+                        <input type="number" id="commission" class="form-input" value="0.03" min="0" max="1" step="0.01">
+                        <small style="color: #8b949e; font-size: 11px;">万三 = 0.03%</small>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">滑点（%）</label>
+                        <input type="number" id="slippage" class="form-input" value="0.01" min="0" max="1" step="0.01">
+                        <small style="color: #8b949e; font-size: 11px;">万一 = 0.01%</small>
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label class="form-label">买入仓位比例（%）</label>
+                        <input type="number" id="buyRatio" class="form-input" value="100" min="1" max="100" step="10">
+                        <small style="color: #8b949e; font-size: 11px;">100% = 全仓买入</small>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">卖出仓位比例（%）</label>
+                        <input type="number" id="sellRatio" class="form-input" value="100" min="1" max="100" step="10">
+                        <small style="color: #8b949e; font-size: 11px;">100% = 全仓卖出</small>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 操作按钮 -->
+            <div class="btn-group">
+                <button class="btn btn-primary" onclick="runBacktest()" id="runBtn">🚀 运行回测</button>
+            </div>
+            <div class="btn-group" style="margin-top: 8px;">
+                <button class="btn btn-secondary" onclick="resetParams()">重置参数</button>
+            </div>
+        </div>
+
+        <!-- 右侧内容区 -->
+        <div class="content">
+            <div id="loading" class="loading">
+                <div class="spinner"></div>
+                <div>正在运行回测，请稍候...</div>
+            </div>
+
+            <div id="results" style="display: none;">
+                <div class="alert alert-success" id="statusMessage"></div>
+
+                <div class="metrics-grid" id="metricsGrid"></div>
+
+                <div class="chart-box">
+                    <div class="chart-title">📊 股价走势 & 交易信号</div>
+                    <div id="priceChart" style="height: 500px;"></div>
+                </div>
+
+                <div class="chart-box">
+                    <div class="chart-title">📈 策略净值曲线</div>
+                    <div id="navChart" style="height: 300px;"></div>
+                </div>
+
+                <div class="chart-box">
+                    <div class="chart-title">📋 交易记录</div>
+                    <div id="tradesTable"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // ============================================================================
+        // 全局配置
+        // ============================================================================
+        
+        const API_BASE_URL = 'http://localhost:5000';  // Flask API 服务器地址
+        let currentDataSource = 'real';  // 'real' 或 'mock'
+        let apiAvailable = false;
+
+        // ============================================================================
+        // 初始化
+        // ============================================================================
+        
+        window.onload = function() {
+            checkApiStatus();
+        };
+
+        // ============================================================================
+        // API 状态检测
+        // ============================================================================
+        
+        async function checkApiStatus() {
+            const statusDiv = document.getElementById('apiStatus');
+            statusDiv.style.display = 'block';
+            statusDiv.className = 'alert alert-info';
+            statusDiv.innerHTML = '🔄 API服务器状态检测中...';
+            
+            try {
+                const response = await fetch(`${API_BASE_URL}/api/health`, {
+                    method: 'GET',
+                    mode: 'cors'
+                });
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    apiAvailable = true;
+                    statusDiv.className = 'alert alert-success';
+                    statusDiv.innerHTML = '✅ API服务器已连接，可使用真实数据回测';
+                } else {
+                    throw new Error('API服务器响应异常');
+                }
+            } catch (error) {
+                apiAvailable = false;
+                statusDiv.className = 'alert alert-error';
+                statusDiv.innerHTML = '❌ API服务器未启动。<br><br>请先运行：<br><code>python api_server.py</code><br><br>当前将使用模拟数据。';
+                
+                // 自动切换到模拟数据
+                if (currentDataSource === 'real') {
+                    setDataSource('mock');
+                }
+            }
+        }
+
+        // ============================================================================
+        // 数据源切换
+        // ============================================================================
+        
+        function setDataSource(source) {
+            currentDataSource = source;
+            
+            // 更新按钮样式
+            document.querySelectorAll('.data-source-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            
+            if (source === 'real') {
+                document.querySelectorAll('.data-source-btn')[0].classList.add('active');
+                
+                // 检查API是否可用
+                if (!apiAvailable) {
+                    checkApiStatus();
+                }
+            } else {
+                document.querySelectorAll('.data-source-btn')[1].classList.add('active');
+            }
+        }
+
+        // ============================================================================
+        // 获取参数
+        // ============================================================================
+        
+        function getParams() {
+            return {
+                ts_code: document.getElementById('stockSelect').value,
+                short_window: parseInt(document.getElementById('shortWindow').value),
+                long_window: parseInt(document.getElementById('longWindow').value),
+                ma_type: document.getElementById('maType').value,
+                trend_filter: document.getElementById('trendFilter').checked,
+                trend_window: 120,
+                atr_filter: document.getElementById('atrFilter').checked,
+                atr_window: parseInt(document.getElementById('atrWindow').value) || 14,
+                atr_percentile: parseInt(document.getElementById('atrPercentile').value) || 20,
+                initial_capital: parseFloat(document.getElementById('initialCapital').value),
+                commission: parseFloat(document.getElementById('commission').value) / 100,  // 转换为小数
+                slippage: parseFloat(document.getElementById('slippage').value) / 100,  // 转换为小数
+                buy_ratio: parseFloat(document.getElementById('buyRatio').value) / 100,  // 转换为小数
+                sell_ratio: parseFloat(document.getElementById('sellRatio').value) / 100,  // 转换为小数
+                start_date: document.getElementById('startDate').value,
+                end_date: document.getElementById('endDate').value
+            };
+        }
+
+        // ============================================================================
+        // 运行回测
+        // ============================================================================
+        
+        async function runBacktest() {
+            const params = getParams();
+            
+            // 显示加载动画
+            document.getElementById('loading').classList.add('active');
+            document.getElementById('results').style.display = 'none';
+            document.getElementById('runBtn').disabled = true;
+            
+            try {
+                let result;
+                
+                if (currentDataSource === 'real' && apiAvailable) {
+                    // 使用真实数据（调用API）
+                    result = await runRealBacktest(params);
+                } else {
+                    // 使用模拟数据
+                    result = runMockBacktest(params);
+                }
+                
+                // 显示结果
+                displayResults(result);
+                
+            } catch (error) {
+                alert('回测失败：' + error.message);
+                console.error(error);
+            } finally {
+                document.getElementById('loading').classList.remove('active');
+                document.getElementById('runBtn').disabled = false;
+            }
+        }
+
+        // ============================================================================
+        // 真实数据回测（调用API）
+        // ============================================================================
+        
+        async function runRealBacktest(params) {
+            const response = await fetch(`${API_BASE_URL}/api/backtest`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(params)
+            });
+            
+            if (!response.ok) {
+                const errorData = await response.json();
+                throw new Error(errorData.error || 'API请求失败');
+            }
+            
+            const data = await response.json();
+            
+            if (!data.success) {
+                throw new Error(data.error || '回测失败');
+            }
+            
+            return data;
+        }
+
+        // ============================================================================
+        // 模拟数据回测
+        // ============================================================================
+        
+        function runMockBacktest(params) {
+            // 生成模拟数据
+            const startDate = new Date(params.start_date);
+            const endDate = new Date(params.end_date);
+            const days = Math.floor((endDate - startDate) / (1000 * 60 * 60 * 24)) + 1;
+            
+            const dates = [];
+            const prices = [];
+            let price = 100;
+            
+            for (let i = 0; i < days; i++) {
+                const date = new Date(startDate);
+                date.setDate(date.getDate() + i);
+                
+                if (date.getDay() !== 0 && date.getDay() !== 6) {  // 跳过周末
+                    dates.push(date.toISOString().split('T')[0]);
+                    
+                    // 随机价格波动
+                    const change = (Math.random() - 0.5) * 2;
+                    price = price * (1 + change / 100);
+                    prices.push(price);
+                }
+            }
+            
+            // 计算均线
+            const shortWindow = params.short_window;
+            const longWindow = params.long_window;
+            
+            const shortMA = [];
+            const longMA = [];
+            const signals = [];
+            
+            for (let i = 0; i < prices.length; i++) {
+                // 短均线
+                if (i >= shortWindow - 1) {
+                    const sum = prices.slice(i - shortWindow + 1, i + 1).reduce((a, b) => a + b, 0);
+                    shortMA.push(sum / shortWindow);
+                } else {
+                    shortMA.push(null);
+                }
+                
+                // 长均线
+                if (i >= longWindow - 1) {
+                    const sum = prices.slice(i - longWindow + 1, i + 1).reduce((a, b) => a + b, 0);
+                    longMA.push(sum / longWindow);
+                } else {
+                    longMA.push(null);
+                }
+                
+                // 信号（简化版）
+                if (i > 0 && shortMA[i] && longMA[i] && shortMA[i-1] && longMA[i-1]) {
+                    if (shortMA[i-1] <= longMA[i-1] && shortMA[i] > longMA[i]) {
+                        signals.push(1);  // 金叉 - 买入
+                    } else if (shortMA[i-1] >= longMA[i-1] && shortMA[i] < longMA[i]) {
+                        signals.push(-1);  // 死叉 - 卖出
+                    } else {
+                        signals.push(0);
+                    }
+                } else {
+                    signals.push(0);
+                }
+            }
+            
+            // 模拟回测
+            let nav = [params.initial_capital];
+            let bhNav = [params.initial_capital];
+            let position = 0;
+            let cash = params.initial_capital;
+            let shares = 0;
+            
+            const trades = [];
+            
+            for (let i = 1; i < prices.length; i++) {
+                // 策略净值
+                if (signals[i] === 1 && position === 0) {
+                    // 买入
+                    const buyPrice = prices[i] * (1 + params.slippage);
+                    const sharesToBuy = Math.floor(cash * params.buy_ratio / buyPrice / (1 + params.commission));
+                    if (sharesToBuy > 0) {
+                        cash -= sharesToBuy * buyPrice * (1 + params.commission);
+                        shares += sharesToBuy;
+                        position = 1;
+                        trades.push({
+                            date: dates[i],
+                            type: 'BUY',
+                            price: buyPrice,
+                            shares: sharesToBuy
+                        });
+                    }
+                } else if (signals[i] === -1 && position === 1) {
+                    // 卖出
+                    const sellPrice = prices[i] * (1 - params.slippage);
+                    const sharesToSell = Math.floor(shares * params.sell_ratio);
+                    if (sharesToSell > 0) {
+                        cash += sharesToSell * sellPrice * (1 - params.commission);
+                        shares -= sharesToSell;
+                        if (shares === 0) position = 0;
+                        trades.push({
+                            date: dates[i],
+                            type: 'SELL',
+                            price: sellPrice,
+                            shares: sharesToSell
+                        });
+                    }
+                }
+                
+                const currentNav = cash + shares * prices[i];
+                nav.push(currentNav);
+                
+                // BUY-HOLD净值
+                if (i === 1) {
+                    const bhShares = Math.floor(params.initial_capital / prices[0] / (1 + params.commission));
+                    const bhCash = params.initial_capital - bhShares * prices[0] * (1 + params.commission);
+                    bhNav = [params.initial_capital];
+                    for (let j = 1; j <= i; j++) {
+                        bhNav.push(bhCash + bhShares * prices[j]);
+                    }
+                } else {
+                    bhNav.push(bhNav[bhNav.length - 1]);
+                }
+            }
+            
+            // 计算指标
+            const strategyReturn = (nav[nav.length - 1] - nav[0]) / nav[0];
+            const bhReturn = (bhNav[bhNav.length - 1] - bhNav[0]) / bhNav[0];
+            
+            return {
+                success: true,
+                stock_info: { name: '模拟股票', ts_code: 'MOCK', industry: '模拟' },
+                metrics: {
+                    strategy_total_return: strategyReturn,
+                    bh_total_return: bhReturn,
+                    excess_return: strategyReturn - bhReturn,
+                    strategy_sharpe: 0.5,
+                    strategy_max_drawdown: -0.1,
+                    num_trades: trades.length
+                },
+                mock_data: {
+                    dates: dates,
+                    prices: prices,
+                    short_ma: shortMA,
+                    long_ma: longMA,
+                    signals: signals,
+                    nav: nav,
+                    bh_nav: bhNav
+                },
+                trades: trades
+            };
+        }
+
+        // ============================================================================
+        // 显示结果
+        // ============================================================================
+        
+        function displayResults(result) {
+            // 显示结果区域
+            document.getElementById('results').style.display = 'block';
+            
+            // 状态消息
+            document.getElementById('statusMessage').innerHTML = 
+                `✅ 回测完成！${result.stock_info.name} (${result.stock_info.ts_code})`;
+            
+            // 显示指标
+            displayMetrics(result.metrics);
+            
+            // 显示图表
+            if (result.mock_data) {
+                // 模拟数据
+                displayMockCharts(result.mock_data, result.trades);
+            } else {
+                // 真实数据 - 加载API生成的图表
+                displayRealCharts(result.chart_url);
+            }
+            
+            // 显示交易记录
+            displayTrades(result.trades);
+        }
+
+        // ============================================================================
+        // 显示指标
+        // ============================================================================
+        
+        function displayMetrics(metrics) {
+            const grid = document.getElementById('metricsGrid');
+            
+            const strategyReturn = (metrics.strategy_total_return * 100).toFixed(2);
+            const bhReturn = (metrics.bh_total_return * 100).toFixed(2);
+            const excessReturn = (metrics.excess_return * 100).toFixed(2);
+            
+            grid.innerHTML = `
+                <div class="metric-card">
+                    <div class="metric-label">策略收益率</div>
+                    <div class="metric-value ${strategyReturn >= 0 ? 'positive' : 'negative'}">${strategyReturn}%</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-label">BUY-HOLD收益率</div>
+                    <div class="metric-value ${bhReturn >= 0 ? 'positive' : 'negative'}">${bhReturn}%</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-label">超额收益</div>
+                    <div class="metric-value ${excessReturn >= 0 ? 'positive' : 'negative'}">${excessReturn}%</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-label">夏普比率</div>
+                    <div class="metric-value">${metrics.strategy_sharpe ? metrics.strategy_sharpe.toFixed(2) : 'N/A'}</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-label">最大回撤</div>
+                    <div class="metric-value negative">${(metrics.strategy_max_drawdown * 100).toFixed(2)}%</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-label">交易次数</div>
+                    <div class="metric-value">${metrics.num_trades}</div>
+                </div>
+            `;
+        }
+
+        // ============================================================================
+        // 显示模拟数据图表
+        // ============================================================================
+        
+        function displayMockCharts(data, trades) {
+            // 价格图表
+            const priceTrace = {
+                x: data.dates,
+                y: data.prices,
+                type: 'line',
+                name: '股价',
+                line: { color: '#388bfd' }
+            };
+            
+            const shortMATrace = {
+                x: data.dates,
+                y: data.short_ma,
+                type: 'line',
+                name: `短均线(${document.getElementById('shortWindow').value})`,
+                line: { color: 'orange' }
+            };
+            
+            const longMATrace = {
+                x: data.dates,
+                y: data.long_ma,
+                type: 'line',
+                name: `长均线(${document.getElementById('longWindow').value})`,
+                line: { color: 'blue' }
+            };
+            
+            // 买入信号
+            const buyDates = [];
+            const buyPrices = [];
+            const sellDates = [];
+            const sellPrices = [];
+            
+            trades.forEach(trade => {
+                if (trade.type === 'BUY') {
+                    buyDates.push(trade.date);
+                    buyPrices.push(trade.price);
+                } else {
+                    sellDates.push(trade.date);
+                    sellPrices.push(trade.price);
+                }
+            });
+            
+            const buySignalTrace = {
+                x: buyDates,
+                y: buyPrices,
+                mode: 'markers',
+                name: '买入信号',
+                marker: { symbol: 'triangle-up', size: 12, color: 'green' }
+            };
+            
+            const sellSignalTrace = {
+                x: sellDates,
+                y: sellPrices,
+                mode: 'markers',
+                name: '卖出信号',
+                marker: { symbol: 'triangle-down', size: 12, color: 'red' }
+            };
+            
+            Plotly.newPlot('priceChart', [priceTrace, shortMATrace, longMATrace, buySignalTrace, sellSignalTrace], {
+                title: '股价走势 & 交易信号（模拟数据）',
+                xaxis: { title: '日期' },
+                yaxis: { title: '价格（元）' },
+                hovermode: 'closest'
+            });
+            
+            // 净值图表
+            const navTrace = {
+                x: data.dates,
+                y: data.nav,
+                type: 'line',
+                name: '策略净值',
+                line: { color: 'blue' }
+            };
+            
+            const bhNavTrace = {
+                x: data.dates,
+                y: data.bh_nav,
+                type: 'line',
+                name: 'BUY-HOLD',
+                line: { color: 'gray', dash: 'dash' }
+            };
+            
+            Plotly.newPlot('navChart', [navTrace, bhNavTrace], {
+                title: '策略净值 vs BUY-HOLD',
+                xaxis: { title: '日期' },
+                yaxis: { title: '净值（元）' }
+            });
+        }
+
+        // ============================================================================
+        // 显示真实数据图表
+        // ============================================================================
+        
+        function displayRealCharts(chartUrl) {
+            // 加载API生成的图表
+            const iframe = document.createElement('iframe');
+            iframe.src = chartUrl;
+            iframe.style.width = '100%';
+            iframe.style.height = '500px';
+            iframe.style.border = 'none';
+            
+            const priceChartDiv = document.getElementById('priceChart');
+            priceChartDiv.innerHTML = '';
+            priceChartDiv.appendChild(iframe);
+            
+            // 净值图表也需要从API获取
+            // 这里简化为显示提示
+            document.getElementById('navChart').innerHTML = 
+                '<p style="color: #8b949e; text-align: center; padding: 40px;">净值曲线已包含在上方图表中</p>';
+        }
+
+        // ============================================================================
+        // 显示交易记录
+        // ============================================================================
+        
+        function displayTrades(trades) {
+            if (!trades || trades.length === 0) {
+                document.getElementById('tradesTable').innerHTML = 
+                    '<p style="color: #8b949e; text-align: center; padding: 20px;">暂无交易记录</p>';
+                return;
+            }
+            
+            let html = '<table class="trades-table"><tr><th>日期</th><th>操作</th><th>价格</th><th>数量</th></tr>';
+            
+            trades.forEach(trade => {
+                const action = trade.type === 'BUY' ? '买入' : '卖出';
+                const actionColor = trade.type === 'BUY' ? 'color: green;' : 'color: red;';
+                
+                html += `
+                    <tr>
+                        <td>${trade.date}</td>
+                        <td style="${actionColor}">${action}</td>
+                        <td>${trade.price ? trade.price.toFixed(2) : 'N/A'}</td>
+                        <td>${trade.shares || trade.shares_bought || trade.shares_sold || 'N/A'}</td>
+                    </tr>
+                `;
+            });
+            
+            html += '</table>';
+            document.getElementById('tradesTable').innerHTML = html;
+        }
+
+        // ============================================================================
+        // 重置参数
+        // ============================================================================
+        
+        function resetParams() {
+            document.getElementById('shortWindow').value = 5;
+            document.getElementById('longWindow').value = 15;
+            document.getElementById('maType').value = 'MA';
+            document.getElementById('trendFilter').checked = true;
+            document.getElementById('atrFilter').checked = true;
+            document.getElementById('initialCapital').value = 100000;
+            document.getElementById('commission').value = 0.03;
+            document.getElementById('slippage').value = 0.01;
+            document.getElementById('buyRatio').value = 100;
+            document.getElementById('sellRatio').value = 100;
+            document.getElementById('startDate').value = '2024-07-03';
+            document.getElementById('endDate').value = '2026-07-03';
+            
+            alert('参数已重置为默认值');
+        }
+    </script>
+</body>
+</html>

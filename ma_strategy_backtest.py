@@ -501,4 +501,146 @@ def main():
 
 
 if __name__ == '__main__':
-    main()
+    import argparse
+    
+    parser = argparse.ArgumentParser(description='均线策略回测系统')
+    
+    # 股票选择
+    parser.add_argument('--ts_code', type=str, default=None,
+                        help='股票代码（如 600519.SH）。不指定则回测所有5只股票')
+    
+    # 策略参数
+    parser.add_argument('--short_window', type=int, default=None,
+                        help='短均线周期（默认5）')
+    parser.add_argument('--long_window', type=int, default=None,
+                        help='长均线周期（默认15）')
+    parser.add_argument('--ma_type', type=str, default=None,
+                        choices=['MA', 'EMA'],
+                        help='均线类型（MA 或 EMA，默认MA）')
+    parser.add_argument('--trend_filter', action='store_true', default=None,
+                        help='启用趋势过滤器')
+    parser.add_argument('--no_trend_filter', action='store_false', dest='trend_filter',
+                        help='禁用趋势过滤器')
+    parser.add_argument('--trend_window', type=int, default=None,
+                        help='趋势过滤器周期（默认120）')
+    parser.add_argument('--atr_filter', action='store_true', default=None,
+                        help='启用ATR过滤器')
+    parser.add_argument('--no_atr_filter', action='store_false', dest='atr_filter',
+                        help='禁用ATR过滤器')
+    parser.add_argument('--atr_window', type=int, default=None,
+                        help='ATR计算周期（默认14）')
+    parser.add_argument('--atr_percentile', type=float, default=None,
+                        help='ATR历史百分位阈值（默认20）')
+    
+    # 回测参数
+    parser.add_argument('--initial_capital', type=float, default=None,
+                        help='初始资金（元，默认100000）')
+    parser.add_argument('--commission', type=float, default=None,
+                        help='手续费率（如0.0003表示万三，默认0.0003）')
+    parser.add_argument('--slippage', type=float, default=None,
+                        help='滑点（如0.0001表示万一，默认0.0001）')
+    parser.add_argument('--position_sizing', type=str, default=None,
+                        choices=['full', 'fixed_shares', 'fixed_ratio'],
+                        help='仓位管理方式（默认full）')
+    parser.add_argument('--fixed_shares', type=int, default=None,
+                        help='固定数量（position_sizing=fixed_shares时生效）')
+    parser.add_argument('--fixed_ratio', type=float, default=None,
+                        help='固定比例（position_sizing=fixed_ratio时生效，如0.5表示50%%）')
+    parser.add_argument('--buy_ratio', type=float, default=None,
+                        help='买入时仓位比例（0.0-1.0，默认1.0表示全仓）')
+    parser.add_argument('--sell_ratio', type=float, default=None,
+                        help='卖出时仓位比例（0.0-1.0，默认1.0表示全仓）')
+    
+    # 日期范围
+    parser.add_argument('--start_date', type=str, default=None,
+                        help='起始日期（格式：YYYY-MM-DD，默认2024-07-03）')
+    parser.add_argument('--end_date', type=str, default=None,
+                        help='结束日期（格式：YYYY-MM-DD，默认2026-07-03）')
+    
+    # 输出选项
+    parser.add_argument('--output_dir', type=str, default=None,
+                        help='输出目录（默认outputs/ma_backtest）')
+    parser.add_argument('--no_plot', action='store_true',
+                        help='不生成图表（仅计算指标）')
+    
+    args = parser.parse_args()
+    
+    # 更新策略参数（如果命令行指定了）
+    if args.ts_code:
+        # 单只股票回测
+        stock_map = {s['ts_code']: s for s in STOCKS}
+        if args.ts_code not in stock_map:
+            print(f"错误：未找到股票代码 {args.ts_code}")
+            print(f"可用股票：{', '.join([s['ts_code'] for s in STOCKS])}")
+            sys.exit(1)
+        target_stocks = [stock_map[args.ts_code]]
+    else:
+        # 所有股票回测
+        target_stocks = STOCKS
+    
+    # 更新全局参数
+    for key, value in vars(args).items():
+        if value is not None and key in STRATEGY_PARAMS:
+            STRATEGY_PARAMS[key] = value
+    
+    # 更新输出目录
+    if args.output_dir:
+        OUTPUT_DIR = args.output_dir
+        CHARTS_DIR = os.path.join(OUTPUT_DIR, 'charts')
+        REPORTS_DIR = os.path.join(OUTPUT_DIR, 'reports')
+    
+    # 执行回测
+    print("=" * 80)
+    print("均线策略回测系统")
+    print("=" * 80)
+    print(f"\n策略参数:")
+    for key, value in STRATEGY_PARAMS.items():
+        if key in ['short_window', 'long_window', 'ma_type', 'trend_filter', 
+                   'atr_filter', 'initial_capital', 'commission', 'start_date', 'end_date']:
+            print(f"  {key}: {value}")
+    
+    # 确保输出目录存在
+    ensure_dir(OUTPUT_DIR)
+    ensure_dir(CHARTS_DIR)
+    ensure_dir(REPORTS_DIR)
+    
+    # 存储所有股票的回测结果
+    all_results = []
+    
+    # 对每只股票执行回测
+    for stock in target_stocks:
+        result = run_single_stock_backtest(stock)
+        all_results.append(result)
+    
+    # 如果回测了多只股票，生成汇总对比表
+    if len(all_results) > 1:
+        print("\n" + "=" * 80)
+        print("汇总对比表")
+        print("=" * 80)
+        
+        summary_data = []
+        for result in all_results:
+            metrics = result['metrics']
+            summary_data.append({
+                '股票': result['stock_info']['name'],
+                '行业': result['stock_info']['industry'],
+                '策略收益率(%)': f"{metrics['strategy_total_return']*100:.2f}",
+                'BUY-HOLD收益率(%)': f"{metrics['bh_total_return']*100:.2f}",
+                '超额收益(%)': f"{metrics['excess_return']*100:.2f}",
+                '策略夏普比率': f"{metrics['strategy_sharpe']:.2f}",
+                '策略最大回撤(%)': f"{metrics['strategy_max_drawdown']*100:.2f}",
+                '交易次数': metrics['num_trades']
+            })
+        
+        summary_df = pd.DataFrame(summary_data)
+        print(summary_df.to_string(index=False))
+        
+        # 保存汇总表
+        summary_path = os.path.join(REPORTS_DIR, 'summary_report.csv')
+        summary_df.to_csv(summary_path, index=False, encoding='utf-8-sig')
+        print(f"\n汇总报告已保存: {summary_path}")
+    
+    print("\n" + "=" * 80)
+    print("回测完成！")
+    print("=" * 80)
+    print(f"\n输出目录: {OUTPUT_DIR}")
